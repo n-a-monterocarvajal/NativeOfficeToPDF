@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe desde el inicio: invocado desde el menú contextual no debe parpadear una consola.
+         La salida por consola no se pierde: Cli/UserOutput.cs se engancha a la consola del proceso
+         padre cuando existe (ver AttachConsole). -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RuntimeIdentifiers>win-x64;win-x86;win-arm64</RuntimeIdentifiers>
+
+    <AssemblyName>NativeOfficeToPdf</AssemblyName>
+    <RootNamespace>NativeOfficeToPdf</RootNamespace>
+    <AssemblyTitle>NativeOfficeToPdf</AssemblyTitle>
+    <Product>NativeOfficeToPdf</Product>
+    <Company>n-a-monterocarvajal</Company>
+    <Description>Conversor de Word y PowerPoint a PDF por la vía nativa de Office.</Description>
+    <Copyright>Copyright (c) 2026 n-a-monterocarvajal</Copyright>
+
+    <!-- Fuente de verdad de la versión del producto. build-package.yml la lee de acá cuando no se le
+         pasa una explícitamente, y el instalador la recibe por /DAppVersion. -->
+    <Version>0.1.0</Version>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+
+    <!-- AnyCPU a propósito: la automatización es COM fuera de proceso (WINWORD.EXE / POWERPNT.EXE son
+         servidores locales), así que la arquitectura del binario no necesita coincidir con la de Office;
+         COM hace el marshalling entre procesos de distinta bitness. -->
+    <PlatformTarget>AnyCPU</PlatformTarget>
+
+    <!-- Los nombres de archivo con acentos y las comparaciones culturales importan acá. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- Permite restaurar y compilar la parte no-Windows del árbol desde Linux (útil para validar el
+         proyecto fuera del runner). La compilación de verdad es la de Windows en CI. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NativeOfficeToPdf.Tests" />
+  </ItemGroup>
+
+  <!-- Sin PackageReference: la automatización de Office se hace por enlace tardío (IDispatch) sobre los
+       servidores COM que Office ya registró en la máquina. Ver docs/01-arquitectura.md, sección
+       "Por qué enlace tardío y no los PIA". -->
+
+</Project>
