@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NativeOfficeToPdf/NativeOfficeToPdf.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NativeOfficeToPdf.Tests/NativeOfficeToPdf.Tests.csproj" />
+  </Folder>
+</Solution>

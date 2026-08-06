@@ -1,0 +1,22 @@
+# Normalización de fin de línea: el repositorio guarda LF y Git entrega lo que corresponda.
+* text=auto
+
+# Archivos que solo consumen herramientas de Windows: siempre CRLF en el árbol de trabajo.
+*.ps1   text eol=crlf
+*.cmd   text eol=crlf
+*.bat   text eol=crlf
+# El compilador de Inno Setup lee el .iss como texto de Windows.
+*.iss   text eol=crlf
+
+*.cs    text diff=csharp
+*.csproj text
+*.slnx  text
+*.yml   text
+*.md    text
+
+# Binarios: sin normalizar ni diferenciar.
+*.png   binary
+*.ico   binary
+*.pdf   binary
+*.docx  binary
+*.pptx  binary

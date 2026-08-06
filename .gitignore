@@ -1,0 +1,24 @@
+## .NET / Visual Studio / Rider
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+## Publicaciones y distribuibles
+publish/
+publish_output/
+dist/
+artifacts/
+
+## Instalador (Inno Setup)
+installer/output/
+installer/payload/
+
+## Resultados de pruebas
+TestResults/
+*.trx
+
+## Sistema operativo
+.DS_Store
+Thumbs.db
