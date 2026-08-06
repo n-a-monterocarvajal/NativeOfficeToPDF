@@ -77,17 +77,15 @@ adentro el nombre del original.
 
 ## Códigos de salida
 
-Compatibles con la convención de OfficeToPDF, por si reutiliza scripts de verificación existentes.
-
 | Código | Significado |
 |---|---|
 | 0 | Éxito |
 | 1 | Fallo genérico (no se generó el PDF sin lanzar excepción) |
-| 4 | `check-updates`: hay una versión más nueva de la aplicación |
-| 8 | Argumentos inválidos |
-| 32 | Extensión no soportada |
-| 64 | Archivo de origen no encontrado |
-| 2048 | Error durante la automatización de Office |
+| 2 | Argumentos inválidos |
+| 3 | Extensión no soportada |
+| 4 | Archivo de origen no encontrado |
+| 5 | Error durante la automatización de Office |
+| 6 | `check-updates`: hay una versión más nueva de la aplicación |
 
 ## Actualizaciones
 

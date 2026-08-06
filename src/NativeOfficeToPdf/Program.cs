@@ -233,8 +233,8 @@ internal static class Program
           {string.Join(" ", SupportedFormats.Extensions.Order(StringComparer.Ordinal))}
 
         Códigos de salida:
-          0 éxito · 1 fallo genérico · 4 hay actualización · 8 argumentos inválidos
-          32 extensión no soportada · 64 origen no encontrado · 2048 error de Office
+          0 éxito · 1 fallo genérico · 2 argumentos inválidos · 3 extensión no soportada
+          4 origen no encontrado · 5 error de Office · 6 hay actualización
 
         Nota para scripts: el binario es una app de Windows sin consola propia, así que PowerShell no
         espera a que termine. Use «Start-Process -Wait -PassThru» para leer el código de salida.

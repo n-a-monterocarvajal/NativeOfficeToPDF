@@ -40,8 +40,9 @@ Marque cada punto. Si alguno falla, no se publica.
       comprobar que **el Word del usuario sigue abierto y con sus cambios**.
 - [ ] Después de cinco o seis conversiones seguidas, el Administrador de tareas **no** muestra
       procesos `WINWORD.EXE` ni `POWERPNT.EXE` huérfanos (con Office cerrado por el usuario).
-- [ ] Convertir el `.docx` protegido con contraseña: falla con un cuadro de diálogo explicativo, **no
-      se queda colgado** esperando una contraseña que nadie puede escribir.
+- [ ] Convertir el `.docx` protegido con contraseña: falla con un cuadro de diálogo explicativo (y
+      código de salida `5`), **no se queda colgado** esperando una contraseña que nadie puede
+      escribir.
 - [ ] Clic derecho sobre el `.txt`: **no** aparece la entrada "Convertir a PDF".
 
 ## Línea de comandos
@@ -54,7 +55,7 @@ Desde PowerShell, en la carpeta del programa:
 - [ ] `.\NativeOfficeToPdf.exe check-updates` responde algo (al día, o hay versión nueva) sin
       quedarse colgado.
 - [ ] `$p = Start-Process .\NativeOfficeToPdf.exe -ArgumentList 'no-existe.docx' -Wait -PassThru;
-      $p.ExitCode` devuelve `64`.
+      $p.ExitCode` devuelve `4`.
 
 ## Desinstalación
 

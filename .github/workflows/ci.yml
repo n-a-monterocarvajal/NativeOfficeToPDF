@@ -89,18 +89,20 @@ jobs:
             return $proceso.ExitCode
           }
 
+          # Los esperados salen de src\NativeOfficeToPdf\Cli\ExitCodes.cs: si cambia esa tabla, este
+          # paso tiene que cambiar con ella.
           $casos = @(
-            @{ Nombre = 'version';               Args = @('--version');            Esperado = 0  },
-            @{ Nombre = 'ayuda';                 Args = @('--help');               Esperado = 0  },
-            @{ Nombre = 'opción desconocida';    Args = @('--no-existe-esto');     Esperado = 8  },
-            @{ Nombre = 'sin argumentos';        Args = @();                       Esperado = 8  },
-            @{ Nombre = 'origen inexistente';    Args = @('no-esta.docx');         Esperado = 64 }
+            @{ Nombre = 'version';               Args = @('--version');            Esperado = 0 },
+            @{ Nombre = 'ayuda';                 Args = @('--help');               Esperado = 0 },
+            @{ Nombre = 'opción desconocida';    Args = @('--no-existe-esto');     Esperado = 2 },
+            @{ Nombre = 'sin argumentos';        Args = @();                       Esperado = 2 },
+            @{ Nombre = 'origen inexistente';    Args = @('no-esta.docx');         Esperado = 4 }
           )
 
           # Extensión no soportada: hace falta un archivo que exista de verdad.
           $txt = Join-Path $env:RUNNER_TEMP 'humo.txt'
           Set-Content -Path $txt -Value 'humo' -Encoding utf8
-          $casos += @{ Nombre = 'extensión no soportada'; Args = @($txt); Esperado = 32 }
+          $casos += @{ Nombre = 'extensión no soportada'; Args = @($txt); Esperado = 3 }
 
           $fallos = @()
           foreach ($caso in $casos) {

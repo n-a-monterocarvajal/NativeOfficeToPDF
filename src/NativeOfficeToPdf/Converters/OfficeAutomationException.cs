@@ -2,7 +2,7 @@ namespace NativeOfficeToPdf.Converters;
 
 /// <summary>
 /// Fallo atribuible a la automatización de Office: la aplicación no está instalada o registrada, se
-/// negó a abrir el documento, o no produjo el PDF. Se traduce al código de salida 2048.
+/// negó a abrir el documento, o no produjo el PDF. Se traduce a <see cref="Cli.ExitCodes.OfficeAutomationError"/>.
 /// </summary>
 internal sealed class OfficeAutomationException : Exception
 {
