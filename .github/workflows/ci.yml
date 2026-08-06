@@ -1,0 +1,115 @@
+# Integración continua: restaura, compila en Release y corre todas las pruebas.
+#
+# Corre en Windows porque el proyecto es `net10.0-windows` y automatiza COM: fuera de Windows no
+# compila ni tiene sentido. Sin matriz de sistemas ni de arquitecturas — el binario es AnyCPU y el
+# único destino soportado es Windows 10 o posterior.
+#
+# Lo que este CI NO puede validar: la conversión de verdad. El runner no tiene Office instalado, así
+# que las pruebas cubren la lógica pura y el humo cubre el arranque del binario y sus códigos de
+# salida. El resto se verifica a mano con docs/02-guion-humo-manual.md.
+#
+# No genera artefactos: para eso está build-package.yml, bajo demanda.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.agents/**'
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - '.agents/**'
+  workflow_dispatch:
+
+# Un push nuevo sobre la misma rama o PR cancela el run anterior: no se pagan minutos por validar un
+# commit que ya quedó obsoleto.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Compilar y probar (Windows, Release)
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    env:
+      # Sin esto, un fallo en el paso de humo abriría un cuadro de diálogo modal y el job se colgaría
+      # hasta el timeout en vez de fallar con su mensaje. Ver Cli/UserOutput.cs.
+      NATIVEOFFICETOPDF_NO_DIALOGS: '1'
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Instalar .NET SDK 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      # Sin caché de NuGet a propósito: el proyecto principal no tiene una sola dependencia externa
+      # (la automatización de Office es por COM, no por paquetes) y la suite de pruebas trae tres
+      # paquetes pequeños. Cachear costaría más de lo que ahorra.
+      - name: Restaurar
+        run: dotnet restore NativeOfficeToPdf.slnx
+
+      - name: Compilar (Release)
+        run: dotnet build NativeOfficeToPdf.slnx -c Release --no-restore
+
+      - name: Pruebas
+        run: dotnet test NativeOfficeToPdf.slnx -c Release --no-build
+
+      # Lo único del binario real que un runner sin Office puede comprobar: que arranca, que responde
+      # a la línea de comandos y que devuelve los códigos de salida documentados en el README.
+      - name: Humo del ejecutable
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = 'src\NativeOfficeToPdf\bin\Release\net10.0-windows\NativeOfficeToPdf.exe'
+          if (-not (Test-Path $exe)) { throw "No se encontró el ejecutable compilado: $exe" }
+
+          # Es una app sin consola propia (WinExe), así que PowerShell no espera por ella sola:
+          # Start-Process -Wait -PassThru es la forma de leer el código de salida.
+          function Exit-Code([string[]] $Arguments) {
+            if ($Arguments.Count -eq 0) {
+              $proceso = Start-Process -FilePath $exe -PassThru -Wait -NoNewWindow
+            } else {
+              $proceso = Start-Process -FilePath $exe -ArgumentList $Arguments -PassThru -Wait -NoNewWindow
+            }
+            return $proceso.ExitCode
+          }
+
+          $casos = @(
+            @{ Nombre = 'version';               Args = @('--version');            Esperado = 0  },
+            @{ Nombre = 'ayuda';                 Args = @('--help');               Esperado = 0  },
+            @{ Nombre = 'opción desconocida';    Args = @('--no-existe-esto');     Esperado = 8  },
+            @{ Nombre = 'sin argumentos';        Args = @();                       Esperado = 8  },
+            @{ Nombre = 'origen inexistente';    Args = @('no-esta.docx');         Esperado = 64 }
+          )
+
+          # Extensión no soportada: hace falta un archivo que exista de verdad.
+          $txt = Join-Path $env:RUNNER_TEMP 'humo.txt'
+          Set-Content -Path $txt -Value 'humo' -Encoding utf8
+          $casos += @{ Nombre = 'extensión no soportada'; Args = @($txt); Esperado = 32 }
+
+          $fallos = @()
+          foreach ($caso in $casos) {
+            $obtenido = Exit-Code $caso.Args
+            if ($obtenido -ne $caso.Esperado) {
+              $fallos += "$($caso.Nombre): se esperaba $($caso.Esperado) y devolvió $obtenido"
+            } else {
+              Write-Host "ok  $($caso.Nombre) -> $obtenido"
+            }
+          }
+
+          if ($fallos) { throw ("Códigos de salida inesperados:`n" + ($fallos -join "`n")) }

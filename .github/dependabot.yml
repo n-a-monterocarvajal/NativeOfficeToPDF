@@ -1,0 +1,41 @@
+# Mantenimiento de dependencias. Semanal y agrupado a propósito: un PR por ecosistema y por semana en
+# vez de un PR por paquete, para no multiplicar ejecuciones de CI (cada PR dispara un run en Windows).
+#
+# Criterio del repositorio: la opción por omisión ante un PR de Dependabot es actualizar, no posponer.
+# El proyecto es pequeño y mantenerlo en la punta cuesta poco.
+version: 2
+
+updates:
+  # Paquetes NuGet. El proyecto principal no tiene ninguno —la automatización de Office es por COM,
+  # no por paquetes—, así que en la práctica esto cubre la suite de pruebas: xunit y el SDK de test.
+  - package-ecosystem: nuget
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Santiago
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      nuget:
+        patterns:
+          - '*'
+
+  # Acciones usadas por los workflows. Están fijadas por SHA con el tag en comentario; Dependabot
+  # actualiza ambos a la vez.
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: America/Santiago
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: 'chore(deps)'
+    groups:
+      github-actions:
+        patterns:
+          - '*'

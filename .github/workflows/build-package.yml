@@ -1,0 +1,350 @@
+# Compilación distribuible bajo demanda.
+#
+# No corre en cada commit ni en cada PR: solo a pedido (workflow_dispatch) o al empujar una etiqueta
+# `v*`. Produce dos formas de la misma versión:
+#
+#   - `installer`              -> NativeOfficeToPdf-Setup.exe, instalador Inno Setup 7 por usuario,
+#                                 framework-dependent (necesita el runtime de .NET 10 en el equipo,
+#                                 que el propio instalador ofrece instalar sin administrador).
+#   - `portable-selfcontained` -> zip con el runtime adentro, para equipos donde no se quiere ni
+#                                 instalar ni depender de nada.
+#
+# Ambos suben binario + `.sha256` como artefacto descargable con retención de 7 días.
+#
+# Publicar el Release ocurre en un job aparte, que es el único con permiso de escritura.
+name: Compilación distribuible
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión (vacío = la del .csproj)'
+        required: false
+        type: string
+        default: ''
+      artifact:
+        description: 'Qué compilar'
+        required: true
+        type: choice
+        options:
+          - installer
+          - portable-selfcontained
+          - both
+        default: installer
+      publish:
+        description: 'Publicar Release (requiere artifact=both o installer)'
+        required: true
+        type: choice
+        options:
+          - 'no'
+          - 'yes'
+        default: 'no'
+  push:
+    tags:
+      - 'v*'
+
+# No se cancelan runs en curso: una compilación distribuible, y más si publica, no debe interrumpirse
+# a medias por otro disparo.
+concurrency:
+  group: build-package-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compilar distribuible (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      publish: ${{ steps.resolve.outputs.publish }}
+      artifact_name: ${{ steps.resolve.outputs.artifact_name }}
+
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Todas las validaciones caras-de-descubrir-tarde (versión inválida, notas de release ausentes,
+      # tag ya existente) se hacen ACÁ, antes de gastar minutos compilando.
+      - name: Resolver versión y modo
+        id: resolve
+        shell: pwsh
+        env:
+          IN_VERSION: ${{ inputs.version }}
+          IN_ARTIFACT: ${{ inputs.artifact }}
+          IN_PUBLISH: ${{ inputs.publish }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # `git ls-remote` y `gh release view` se usan acá como PREGUNTAS (¿existe el tag?): su salida
+          # distinta de cero es una respuesta válida, no un error del paso.
+          $PSNativeCommandUseErrorActionPreference = $false
+          $ref = '${{ github.ref }}'
+          $isTag = $ref.StartsWith('refs/tags/v')
+
+          if ($isTag) {
+            $version = $ref.Substring('refs/tags/v'.Length)
+          } elseif (-not [string]::IsNullOrWhiteSpace($env:IN_VERSION)) {
+            $version = $env:IN_VERSION.Trim().TrimStart('v')
+          } else {
+            # Fuente de verdad de la versión del producto.
+            [xml] $proyecto = Get-Content 'src/NativeOfficeToPdf/NativeOfficeToPdf.csproj'
+            $version = ($proyecto.Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1)
+            if ([string]::IsNullOrWhiteSpace($version)) {
+              throw 'No se pudo leer <Version> de src/NativeOfficeToPdf/NativeOfficeToPdf.csproj'
+            }
+          }
+
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') {
+            throw "Versión con formato inesperado: '$version' (se espera X.Y.Z o X.Y.Z-alpha)"
+          }
+
+          # En un push de tag no hay inputs: se trata como candidato a release (instalador + portable),
+          # pero NUNCA publica solo. Publicar es siempre una acción explícita.
+          $mode = if ($isTag) { 'both' } elseif ($env:IN_ARTIFACT) { $env:IN_ARTIFACT } else { 'installer' }
+          $publish = ($env:IN_PUBLISH -eq 'yes')
+
+          if ($publish -and $mode -eq 'portable-selfcontained') {
+            throw 'publish=yes necesita el instalador: use artifact=installer o artifact=both.'
+          }
+
+          $releaseSet = $publish -or $isTag
+          $doInstaller = ($mode -in @('installer', 'both')) -or $releaseSet
+          $doPortable = ($mode -in @('portable-selfcontained', 'both')) -or $releaseSet
+
+          if ($publish) {
+            if ($ref -ne 'refs/heads/main') {
+              throw "Publicar solo desde main (rama recibida: $ref). Convención del repo: el tag apunta a main."
+            }
+            $notas = "docs/release-notes/v$version.md"
+            if (-not (Test-Path $notas)) {
+              throw "Faltan las notas de la versión: $notas (ver docs/release-notes/README.md)"
+            }
+            git ls-remote --exit-code --tags origin "refs/tags/v$version" *> $null
+            if ($LASTEXITCODE -eq 0) { throw "El tag v$version ya existe en el remoto: no se recrea." }
+            gh release view "v$version" *> $null
+            if ($LASTEXITCODE -eq 0) { throw "El Release v$version ya existe: no se recrea." }
+            # Las dos consultas de arriba se usan como PREGUNTAS: cuando el tag o el Release NO existen
+            # —el caso normal al publicar una versión nueva— dejan $LASTEXITCODE distinto de 0, y el
+            # wrapper de pwsh de GitHub Actions hace `exit $LASTEXITCODE` al terminar el paso. Se
+            # resetea para que el código de salida refleje la resolución, no la última pregunta.
+            $global:LASTEXITCODE = 0
+          }
+
+          $sufijo = if ($releaseSet) { 'release' } elseif ($doInstaller) { 'instalador' } else { 'portable' }
+
+          "version=$version"                                  >> $env:GITHUB_OUTPUT
+          "do_installer=$($doInstaller.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+          "do_portable=$($doPortable.ToString().ToLower())"   >> $env:GITHUB_OUTPUT
+          "publish=$($publish.ToString().ToLower())"          >> $env:GITHUB_OUTPUT
+          "artifact_name=NativeOfficeToPdf-v$version-$sufijo" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Versión: $version | instalador: $doInstaller | portable: $doPortable | publicar: $publish"
+
+      - name: Instalar .NET SDK 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+
+      # Zip autocontenido: trae el runtime de .NET adentro, así que corre en un equipo sin nada
+      # instalado. Se descomprime y se registra con `NativeOfficeToPdf.exe install`.
+      - name: Publicar portable (self-contained win-x64)
+        if: steps.resolve.outputs.do_portable == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet publish src/NativeOfficeToPdf/NativeOfficeToPdf.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:Version=${{ steps.resolve.outputs.version }} `
+            -o dist/portable
+          if ($LASTEXITCODE -ne 0) { throw 'dotnet publish (portable) falló' }
+          if (-not (Test-Path 'dist/portable/NativeOfficeToPdf.exe')) {
+            throw 'El publish portable no generó NativeOfficeToPdf.exe'
+          }
+          New-Item -ItemType Directory -Force -Path dist/out | Out-Null
+          $zip = "dist/out/NativeOfficeToPdf-v${{ steps.resolve.outputs.version }}-win-x64-selfcontained.zip"
+          Compress-Archive -Path 'dist/portable/*' -DestinationPath $zip -CompressionLevel Optimal
+
+      - name: Publicar payload del instalador (framework-dependent win-x64)
+        if: steps.resolve.outputs.do_installer == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet publish src/NativeOfficeToPdf/NativeOfficeToPdf.csproj `
+            -c Release -r win-x64 --self-contained false `
+            -p:Version=${{ steps.resolve.outputs.version }} `
+            -o installer/payload
+          if ($LASTEXITCODE -ne 0) { throw 'dotnet publish (payload del instalador) falló' }
+          if (-not (Test-Path 'installer/payload/NativeOfficeToPdf.exe')) {
+            throw 'El publish del payload no generó NativeOfficeToPdf.exe'
+          }
+
+      - name: Compilar instalador (Inno Setup 7)
+        if: steps.resolve.outputs.do_installer == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          # La imagen de windows-latest trae Inno Setup preinstalado, pero históricamente en la rama 6.
+          # El repositorio se compila con la 7, así que no basta con encontrar "un ISCC": hay que
+          # encontrar uno de versión mayor >= 7, y si no está, instalarlo.
+          function Buscar-Iscc7 {
+            Get-ChildItem -Path 'C:\Program Files (x86)', 'C:\Program Files', "$env:LOCALAPPDATA\Programs" `
+                -Filter 'Inno Setup*' -Directory -ErrorAction SilentlyContinue |
+              ForEach-Object {
+                $iscc = Join-Path $_.FullName 'ISCC.exe'
+                if (Test-Path $iscc) {
+                  [pscustomobject]@{
+                    Ruta  = $iscc
+                    Mayor = (Get-Item $iscc).VersionInfo.FileMajorPart
+                  }
+                }
+              } |
+              Where-Object { $_.Mayor -ge 7 } |
+              Sort-Object Mayor -Descending |
+              Select-Object -First 1 -ExpandProperty Ruta
+          }
+
+          $iscc = Buscar-Iscc7
+          if (-not $iscc) {
+            Write-Host 'No hay Inno Setup 7 en el runner: instalando la última estable desde jrsoftware.org.'
+            $instalador = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+            # download.php/is.exe apunta siempre a la última estable, que es de la rama 7.
+            Invoke-WebRequest -UseBasicParsing -Uri 'https://jrsoftware.org/download.php/is.exe' -OutFile $instalador
+            Start-Process -FilePath $instalador `
+              -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' `
+              -Wait -NoNewWindow
+            $iscc = Buscar-Iscc7
+          }
+          if (-not $iscc) { throw 'No se encontró ISCC.exe de Inno Setup 7 en el runner.' }
+          Write-Host "ISCC: $iscc (versión $((Get-Item $iscc).VersionInfo.FileVersion))"
+
+          & $iscc "/DAppVersion=${{ steps.resolve.outputs.version }}" 'installer\NativeOfficeToPdf.iss'
+          if ($LASTEXITCODE -ne 0) { throw 'ISCC falló al compilar el instalador' }
+
+          New-Item -ItemType Directory -Force -Path dist/out | Out-Null
+          Copy-Item 'installer/output/NativeOfficeToPdf-Setup.exe' 'dist/out/NativeOfficeToPdf-Setup.exe'
+
+      # Formato `<hash>  <archivo>`, compatible con `sha256sum -c` y con `Get-FileHash` a ojo.
+      - name: Calcular SHA-256
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $archivos = Get-ChildItem 'dist/out' -File | Where-Object { $_.Extension -ne '.sha256' }
+          if (-not $archivos) { throw 'No se generó ningún distribuible en dist/out' }
+          foreach ($a in $archivos) {
+            $h = (Get-FileHash $a.FullName -Algorithm SHA256).Hash.ToLower()
+            # Salto de línea LF explícito: `sha256sum -c` (Linux, job de publicación) trataría un CRLF
+            # como parte del nombre del archivo y no lo encontraría.
+            [System.IO.File]::WriteAllText("$($a.FullName).sha256", "$h  $($a.Name)`n")
+            Write-Host "$h  $($a.Name)  ($([math]::Round($a.Length/1MB,1)) MB)"
+          }
+
+      - name: Subir artefacto
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.resolve.outputs.artifact_name }}
+          path: dist/out/*
+          retention-days: 7
+          if-no-files-found: error
+
+  # Único job con permiso de escritura, y solo bajo pedido explícito (publish=yes). Corre en Linux:
+  # solo descarga el artefacto y llama a `gh`, así que no hace falta un runner Windows.
+  publish:
+    name: Publicar Release
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Descargar artefacto
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.build.outputs.artifact_name }}
+          path: dist
+
+      - name: Verificar SHA-256 de lo descargado
+        working-directory: dist
+        run: |
+          set -euo pipefail
+          for f in *.sha256; do
+            sha256sum -c "$f"
+          done
+
+      # Cuerpo = notas escritas a mano para esa versión + tabla de descargas + SHA-256 reales.
+      - name: Redactar notas del Release
+        id: notes
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          NOTAS="docs/release-notes/v${VERSION}.md"
+          test -f "$NOTAS" || { echo "::error::Faltan las notas de la versión: $NOTAS"; exit 1; }
+
+          # Primera línea `# v0.1.0 — título` => título del Release; el resto, cuerpo.
+          PRIMERA=$(head -n 1 "$NOTAS")
+          if [[ "$PRIMERA" == "# "* ]]; then
+            TITULO="${PRIMERA#\# }"
+            tail -n +2 "$NOTAS" > cuerpo.md
+          else
+            TITULO="v${VERSION}"
+            cp "$NOTAS" cuerpo.md
+          fi
+          echo "titulo=$TITULO" >> "$GITHUB_OUTPUT"
+
+          ZIP="NativeOfficeToPdf-v${VERSION}-win-x64-selfcontained.zip"
+          {
+            echo
+            echo '## Qué descargar'
+            echo
+            echo '| Asset | Cuándo |'
+            echo '|---|---|'
+            echo '| `NativeOfficeToPdf-Setup.exe` | **Recomendado.** Instala por usuario, sin permisos de administrador, y agrega "Convertir a PDF" al menú contextual. Si falta el runtime de .NET 10, ofrece instalarlo también sin administrador. |'
+            echo "| \`${ZIP}\` | Portable: trae el runtime adentro, no instala nada. Descomprimir y ejecutar \`NativeOfficeToPdf.exe install\` para registrar el menú contextual. |"
+            echo
+            echo 'Requiere Microsoft Office instalado: la conversión la hace el propio Word o PowerPoint.'
+            echo
+            echo 'Sin firma de código: Windows va a mostrar la advertencia de SmartScreen para editores no verificados.'
+            echo
+            echo '## Verificación (SHA-256)'
+            echo
+            echo '```'
+            cat dist/*.sha256 | tr -d '\r'
+            echo '```'
+            echo
+            echo "Compilado por GitHub Actions desde \`${GITHUB_SHA}\` (run [\`${GITHUB_RUN_ID}\`](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}))."
+          } >> cuerpo.md
+
+      # `gh release create --target` crea el tag sobre el commit compilado.
+      - name: Crear Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          TITULO: ${{ steps.notes.outputs.titulo }}
+        run: |
+          set -euo pipefail
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "::error::El Release v${VERSION} ya existe: no se recrea."
+            exit 1
+          fi
+          gh release create "v${VERSION}" \
+            --target "${GITHUB_SHA}" \
+            --title "${TITULO}" \
+            --notes-file cuerpo.md \
+            --latest \
+            dist/*
+          echo "Release publicado: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/v${VERSION}"
