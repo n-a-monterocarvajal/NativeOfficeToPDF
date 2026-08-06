@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Los proyectos de xunit v3 son ejecutables. -->
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <!-- A diferencia del proyecto principal, acá los avisos no rompen la compilación: los analizadores
+         que traen xunit y el SDK de pruebas opinan sobre estilo de aserciones, y no queremos que una
+         opinión suya deje el CI en rojo con la suite entera pasando. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <IsPackable>false</IsPackable>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\NativeOfficeToPdf\NativeOfficeToPdf.csproj" />
+  </ItemGroup>
+
+</Project>
