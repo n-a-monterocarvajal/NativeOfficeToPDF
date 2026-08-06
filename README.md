@@ -8,7 +8,7 @@ Explorador de Windows.
 
 - **Sin permisos de administrador**, ni al instalar ni al usar.
 - **Sin ventanas adicionales** al convertir desde el menú contextual.
-- **También es un CLI**, para scripts y conversiones por lote.
+- **Funciona también como CLI**, para scripts y conversiones por lote.
 
 ## Requisitos
 
@@ -43,7 +43,7 @@ Para quitarlo, `.\NativeOfficeToPdf.exe uninstall`.
 antes de reemplazarlo. Si algo falla, se advierte con un cuadro de diálogo; si todo sale bien, no
 interrumpe.
 
-Seleccionar varios archivos a la vez funciona: el Explorador invoca la herramienta una vez por
+Permite selección múltiple de archivos: el Explorador invoca la herramienta una vez por
 archivo.
 
 **Desde la línea de comandos**:
