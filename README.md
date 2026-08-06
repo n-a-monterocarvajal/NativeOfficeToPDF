@@ -1,5 +1,7 @@
 # NativeOfficeToPdf
 
+[![CI](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/ci.yml/badge.svg)](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/ci.yml)
+
 Convierte documentos de Word y presentaciones de PowerPoint a PDF usando **el mismo motor que
 "Guardar como PDF" de Office**, y agrega la entrada **"Convertir a PDF"** al menú contextual del
 Explorador de Windows.
