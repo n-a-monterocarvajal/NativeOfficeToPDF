@@ -50,7 +50,9 @@ Para quitarlo, `.\NativeOfficeToPdf.exe uninstall`.
 
 ### Desde el Explorador de archivos
 Clic derecho sobre un `.docx`, `.doc`, `.docm`, `.pptx`, `.ppt` o `.pptm` →
-**Convertir a PDF**. El PDF queda junto al archivo original, con el mismo nombre. Si ya existía, pregunta
+**Convertir a PDF**.
+
+El PDF queda junto al archivo original, con el mismo nombre. Si ya existía, pregunta
 antes de reemplazarlo. Si algo falla, se advierte con un cuadro de diálogo; si todo sale bien, no
 interrumpe.
 
