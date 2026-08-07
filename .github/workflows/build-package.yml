@@ -215,10 +215,29 @@ jobs:
 
           $iscc = Buscar-Iscc7
           if (-not $iscc) {
-            Write-Host 'No hay Inno Setup 7 en el runner: instalando la última estable desde jrsoftware.org.'
+            # La versión va fijada a propósito: `jrsoftware.org/download.php/is.exe` dejó de servir el
+            # binario y pasó a devolver la página de descargas en HTML, que el paso guardaba como .exe
+            # y fallaba después con "file or directory is corrupted and unreadable". Las descargas
+            # viven ahora en los Releases de jrsoftware/issrc.
+            $version = '7.0.2'
+            $url = "https://github.com/jrsoftware/issrc/releases/download/is-$($version -replace '\.','_')/innosetup-$version-x64.exe"
+            Write-Host "No hay Inno Setup 7 en el runner: instalando $version desde $url"
+
             $instalador = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
-            # download.php/is.exe apunta siempre a la última estable, que es de la rama 7.
-            Invoke-WebRequest -UseBasicParsing -Uri 'https://jrsoftware.org/download.php/is.exe' -OutFile $instalador
+            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $instalador
+
+            # Se comprueba lo descargado antes de ejecutarlo: si la URL vuelve a servir otra cosa, el
+            # paso debe decir por qué en vez de morir con un error del sistema de archivos.
+            $cabecera = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($instalador)[0..1])
+            if ($cabecera -ne 'MZ') {
+              throw "Lo descargado de $url no es un ejecutable (empieza por '$cabecera')."
+            }
+            $firma = Get-AuthenticodeSignature $instalador
+            if ($firma.Status -ne 'Valid') {
+              throw "El instalador de Inno Setup no trae firma válida: $($firma.Status)."
+            }
+            Write-Host "Descargado y verificado: $([math]::Round((Get-Item $instalador).Length/1MB,1)) MB, firmado por $($firma.SignerCertificate.Subject)"
+
             Start-Process -FilePath $instalador `
               -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' `
               -Wait -NoNewWindow
