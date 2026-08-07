@@ -113,7 +113,7 @@ Para armar el instalador, ver [`installer/README.md`](installer/README.md).
 ## Cómo está hecho, y qué no hace
 
 La arquitectura y las decisiones de diseño están en
-[`docs/01-arquitectura.md`](docs/01-arquitectura.md). Lo que conviene saber de entrada:
+[`docs/01-arquitectura.md`](docs/01-arquitectura.md).
 
 - Si hay ventanas de Office abiertas, **lo reutiliza** y no lo cierra al terminar. Solo cierra las instancias
   que produce la misma aplicación.
