@@ -120,3 +120,10 @@ La arquitectura y las decisiones de diseño están en
 ## Licencia
 
 [MIT](LICENSE).
+
+### Créditos de terceros
+
+El icono de la aplicación es el glifo **`file-pdf-box` de [Material Design Icons](https://pictogrammers.com/library/mdi/icon/file-pdf-box/)**,
+© Pictogrammers, distribuido bajo licencia **Apache 2.0**. Aquí se usa recoloreado y rasterizado a
+varias resoluciones; el proceso está en [`tools/generar-icono.ps1`](tools/generar-icono.ps1) y el texto
+de la licencia en [`NOTICE`](NOTICE).
