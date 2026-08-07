@@ -1,32 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480" font-family="'Segoe UI', 'Segoe UI Variable', -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="480" viewBox="0 0 560 480" font-family="'Segoe UI', 'Segoe UI Variable', -apple-system, sans-serif">
   <defs>
     <filter id="menuShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
     <clipPath id="winClip">
-      <rect x="0" y="0" width="720" height="480" rx="10" ry="10"/>
+      <rect x="0" y="0" width="560" height="480" rx="10" ry="10"/>
     </clipPath>
   </defs>
 
   <!-- ventana del Explorador de Windows -->
   <g clip-path="url(#winClip)">
-    <rect x="0" y="0" width="720" height="480" fill="#f3f3f3"/>
+    <rect x="0" y="0" width="560" height="480" fill="#f3f3f3"/>
 
     <!-- barra de título -->
-    <rect x="0" y="0" width="720" height="40" fill="#ffffff"/>
-    <rect x="0" y="40" width="720" height="1" fill="#e1e1e1"/>
+    <rect x="0" y="0" width="560" height="40" fill="#ffffff"/>
+    <rect x="0" y="40" width="560" height="1" fill="#e1e1e1"/>
     <rect x="16" y="14" width="14" height="12" rx="2" fill="#ffcf5c"/>
     <rect x="36" y="17" width="90" height="6" rx="3" fill="#dcdcdc"/>
     <g stroke="#8a8a8a" stroke-width="1.3" fill="none">
-      <line x1="642" y1="20" x2="654" y2="20"/>
-      <rect x="672" y="14" width="12" height="12"/>
-      <line x1="706" y1="14" x2="716" y2="26"/>
-      <line x1="716" y1="14" x2="706" y2="26"/>
+      <line x1="482" y1="20" x2="494" y2="20"/>
+      <rect x="512" y="14" width="12" height="12"/>
+      <line x1="546" y1="14" x2="556" y2="26"/>
+      <line x1="556" y1="14" x2="546" y2="26"/>
     </g>
 
     <!-- barra de direcciones -->
-    <rect x="0" y="41" width="720" height="44" fill="#fafafa"/>
-    <rect x="0" y="85" width="720" height="1" fill="#e1e1e1"/>
+    <rect x="0" y="41" width="560" height="44" fill="#fafafa"/>
+    <rect x="0" y="85" width="560" height="1" fill="#e1e1e1"/>
     <g stroke="#8a8a8a" stroke-width="1.3" fill="none" stroke-linecap="round">
       <path d="M18 63 L13 63 M15 60 L11.5 63 L15 66"/>
       <path d="M34 63 L39 63 M37 60 L40.5 63 L37 66"/>
