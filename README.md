@@ -8,6 +8,10 @@
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](#requisitos)
 [![Requiere Microsoft Office](https://img.shields.io/badge/requiere-Microsoft%20Office-D83B01)](#requisitos)
 
+<p align="center">
+  <img src="docs/img/menu-contextual-mockup.svg" alt="Recreación del menú contextual de Windows con la entrada &quot;Convertir a PDF&quot; resaltada" width="600">
+</p>
+
 Convierte documentos de Word y presentaciones de PowerPoint a PDF usando **el mismo motor que
 "Guardar como PDF" de Office**, a través de una entrada **"Convertir a PDF"** en el menú contextual del
 Explorador de Windows.
@@ -15,10 +19,6 @@ Explorador de Windows.
 - **Sin permisos de administrador**, ni al instalar ni al usar.
 - **Sin ventanas adicionales** al convertir desde el menú contextual.
 - **Funciona también como CLI**, para scripts y conversiones por lote.
-
-<p align="center">
-  <img src="docs/img/menu-contextual-mockup.svg" alt="Recreación del menú contextual de Windows con la entrada &quot;Convertir a PDF&quot; resaltada" width="600">
-</p>
 
 ## Requisitos
 
