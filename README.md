@@ -16,6 +16,11 @@ Explorador de Windows.
 - **Sin ventanas adicionales** al convertir desde el menú contextual.
 - **Funciona también como CLI**, para scripts y conversiones por lote.
 
+<p align="center">
+  <img src="docs/img/menu-contextual-mockup.svg" alt="Recreación del menú contextual de Windows con la entrada &quot;Convertir a PDF&quot; resaltada" width="600">
+</p>
+<p align="center"><sub>Recreación ilustrativa del menú contextual, no una captura real.</sub></p>
+
 ## Requisitos
 
 | | |
