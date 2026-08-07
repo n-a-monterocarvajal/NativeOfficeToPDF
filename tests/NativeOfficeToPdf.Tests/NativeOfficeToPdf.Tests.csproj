@@ -1,16 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Los proyectos de xunit v3 son ejecutables. -->
+    <!-- Los proyectos de xunit v3 son ejecutables autónomos, no bibliotecas cargadas por un runner. -->
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+
+    <!-- xunit v3 3.2 es nativo de Microsoft.Testing.Platform: no lleva Microsoft.NET.Test.Sdk ni
+         xunit.runner.visualstudio (esos son la vía VSTest). Esta propiedad es la que hace que
+         `dotnet test` hable con MTP. -->
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <!-- A diferencia del proyecto principal, acá los avisos no rompen la compilación: los analizadores
-         que traen xunit y el SDK de pruebas opinan sobre estilo de aserciones, y no queremos que una
-         opinión suya deje el CI en rojo con la suite entera pasando. -->
+         que trae xunit opinan sobre estilo de aserciones, y no queremos que una opinión suya deje el
+         CI en rojo con la suite entera pasando. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
     <IsPackable>false</IsPackable>
@@ -18,9 +23,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Los atributos (Fact, Theory, InlineData) y Assert viven en el espacio de nombres Xunit. La
+         plantilla oficial de la v3 lo importa así, en vez de repetir el `using` en cada archivo. -->
+    <Using Include="Xunit" />
   </ItemGroup>
 
   <ItemGroup>
