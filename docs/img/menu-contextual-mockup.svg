@@ -61,15 +61,12 @@
       <rect x="170" y="128" width="16" height="12" rx="1.5" fill="#ffcf5c"/>
       <rect x="196" y="132" width="190" height="6" rx="3" fill="#d9d9d9"/>
 
-      <!-- archivo de documento seleccionado (relevante: es el que se convierte); icono
-           genérico de "página con esquina doblada", sin usar la marca de Office -->
+      <!-- archivo de documento seleccionado (relevante: es el que se convierte); color
+           azul asociado al formato .docx, con la etiqueta del formato en vez del logo de Office -->
       <rect x="164" y="152" width="360" height="28" rx="4" fill="#e5f0fb" stroke="#cfe4fa"/>
-      <path d="M173 157 H184 L189 162 V175 H173 Z" fill="#ffffff" stroke="#5b7fa6" stroke-width="1.4" stroke-linejoin="round"/>
-      <path d="M184 157 V162 H189" fill="none" stroke="#5b7fa6" stroke-width="1.4" stroke-linejoin="round"/>
-      <line x1="176" y1="165.5" x2="186" y2="165.5" stroke="#8fa8c4" stroke-width="1.3"/>
-      <line x1="176" y1="169" x2="186" y2="169" stroke="#8fa8c4" stroke-width="1.3"/>
-      <line x1="176" y1="172.5" x2="182" y2="172.5" stroke="#8fa8c4" stroke-width="1.3"/>
-      <rect x="198" y="163" width="170" height="6" rx="3" fill="#8fb8e6"/>
+      <rect x="172" y="158" width="21" height="16" rx="2" fill="#185abd"/>
+      <text x="182.5" y="169" font-size="5.2" fill="#ffffff" font-weight="bold" text-anchor="middle">DOCX</text>
+      <rect x="203" y="163" width="167" height="6" rx="3" fill="#8fb8e6"/>
 
       <!-- archivos irrelevantes: solo bloques de color, sin detalle -->
       <rect x="172" y="190" width="16" height="16" rx="2" fill="#c8c8c8"/>
