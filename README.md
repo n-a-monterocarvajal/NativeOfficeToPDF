@@ -22,7 +22,7 @@ Explorador de Windows.
 
 ## Requisitos
 
-| | |
+| | Especificación |
 |---|---|
 | Sistema | Windows 10 o posterior |
 | Office | Word y/o PowerPoint instalados (Microsoft 365, 2016 o posterior) |
