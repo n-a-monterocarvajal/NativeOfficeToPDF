@@ -37,7 +37,9 @@ el usuario actual y deja su entrada en "Aplicaciones instaladas" de Windows.
 
 En un equipo compartido hay que instalarlo con cada cuenta: el registro es por usuario.
 
-**Versión portable**: el zip `…-selfcontained.zip` del mismo Release trae el runtime adentro. Se
+### Versión portable
+
+El zip `…-selfcontained.zip` del mismo Release trae el runtime adentro. Se
 descomprime donde sea y se registra el menú contextual con:
 
 ```powershell
@@ -49,6 +51,7 @@ Para quitarlo, `.\NativeOfficeToPdf.exe uninstall`.
 ## Uso
 
 ### Desde el Explorador de archivos
+
 Clic derecho sobre un `.docx`, `.doc`, `.docm`, `.pptx`, `.ppt` o `.pptm` →
 **Convertir a PDF**.
 
