@@ -192,25 +192,36 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          # ISCC devuelve código distinto de cero al invocarlo sin argumentos —imprime el uso—, y aquí
+          # se usa justamente así, como pregunta.
+          $PSNativeCommandUseErrorActionPreference = $false
 
           # La imagen de windows-latest trae Inno Setup preinstalado, pero históricamente en la rama 6.
           # El repositorio se compila con la 7, así que no basta con encontrar "un ISCC": hay que
           # encontrar uno de versión mayor >= 7, y si no está, instalarlo.
+          #
+          # La versión NO se puede leer de los metadatos del archivo: el ISCC.exe de la rama 7 no trae
+          # información de versión y responde 0.0.0.0, así que filtrar por FileMajorPart descartaba
+          # precisamente lo que se buscaba. La versión real solo aparece en el banner que el compilador
+          # imprime al invocarlo ("Inno Setup 7 Command-Line Compiler").
           function Buscar-Iscc7 {
             Get-ChildItem -Path 'C:\Program Files (x86)', 'C:\Program Files', "$env:LOCALAPPDATA\Programs" `
                 -Filter 'Inno Setup*' -Directory -ErrorAction SilentlyContinue |
               ForEach-Object {
                 $iscc = Join-Path $_.FullName 'ISCC.exe'
                 if (Test-Path $iscc) {
-                  [pscustomobject]@{
-                    Ruta  = $iscc
-                    Mayor = (Get-Item $iscc).VersionInfo.FileMajorPart
+                  $banner = (& $iscc 2>&1 | Select-Object -First 1) -join ''
+                  $mayor = if ($banner -match 'Inno Setup (\d+)') {
+                    [int]$Matches[1]
+                  } else {
+                    (Get-Item $iscc).VersionInfo.FileMajorPart
                   }
+                  [pscustomobject]@{ Ruta = $iscc; Mayor = $mayor; Banner = $banner }
                 }
               } |
               Where-Object { $_.Mayor -ge 7 } |
               Sort-Object Mayor -Descending |
-              Select-Object -First 1 -ExpandProperty Ruta
+              Select-Object -First 1
           }
 
           $iscc = Buscar-Iscc7
@@ -238,13 +249,22 @@ jobs:
             }
             Write-Host "Descargado y verificado: $([math]::Round((Get-Item $instalador).Length/1MB,1)) MB, firmado por $($firma.SignerCertificate.Subject)"
 
-            Start-Process -FilePath $instalador `
+            $proceso = Start-Process -FilePath $instalador `
               -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' `
-              -Wait -NoNewWindow
+              -Wait -NoNewWindow -PassThru
+            if ($proceso.ExitCode -ne 0) {
+              throw "El instalador de Inno Setup terminó con código $($proceso.ExitCode)."
+            }
             $iscc = Buscar-Iscc7
           }
-          if (-not $iscc) { throw 'No se encontró ISCC.exe de Inno Setup 7 en el runner.' }
-          Write-Host "ISCC: $iscc (versión $((Get-Item $iscc).VersionInfo.FileVersion))"
+          if (-not $iscc) {
+            $vistos = Get-ChildItem -Path 'C:\Program Files (x86)', 'C:\Program Files', "$env:LOCALAPPDATA\Programs" `
+                        -Filter 'Inno Setup*' -Directory -ErrorAction SilentlyContinue |
+                      Select-Object -ExpandProperty FullName
+            throw "No se encontró ISCC.exe de Inno Setup 7 en el runner. Directorios vistos: $($vistos -join '; ')"
+          }
+          Write-Host "ISCC: $($iscc.Ruta) — $($iscc.Banner)"
+          $iscc = $iscc.Ruta
 
           & $iscc "/DAppVersion=${{ steps.resolve.outputs.version }}" 'installer\NativeOfficeToPdf.iss'
           if ($LASTEXITCODE -ne 0) { throw 'ISCC falló al compilar el instalador' }
