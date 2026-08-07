@@ -1,32 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="560" height="480" viewBox="0 0 560 480" font-family="'Segoe UI', 'Segoe UI Variable', -apple-system, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="550" height="480" viewBox="0 0 550 480" font-family="'Segoe UI', 'Segoe UI Variable', -apple-system, sans-serif">
   <defs>
     <filter id="menuShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.28"/>
     </filter>
     <clipPath id="winClip">
-      <rect x="0" y="0" width="560" height="480" rx="10" ry="10"/>
+      <!-- recorte de una captura más ancha: el borde izquierdo es el marco real de la
+           ventana (redondeado), el derecho es un corte recto, sin controles de ventana -->
+      <path d="M10,0 H550 V480 H10 Q0,480 0,470 V10 Q0,0 10,0 Z"/>
     </clipPath>
   </defs>
 
-  <!-- ventana del Explorador de Windows -->
+  <!-- ventana del Explorador de Windows (recortada) -->
   <g clip-path="url(#winClip)">
-    <rect x="0" y="0" width="560" height="480" fill="#f3f3f3"/>
+    <rect x="0" y="0" width="550" height="480" fill="#f3f3f3"/>
 
     <!-- barra de título -->
-    <rect x="0" y="0" width="560" height="40" fill="#ffffff"/>
-    <rect x="0" y="40" width="560" height="1" fill="#e1e1e1"/>
+    <rect x="0" y="0" width="550" height="40" fill="#ffffff"/>
+    <rect x="0" y="40" width="550" height="1" fill="#e1e1e1"/>
     <rect x="16" y="14" width="14" height="12" rx="2" fill="#ffcf5c"/>
     <rect x="36" y="17" width="90" height="6" rx="3" fill="#dcdcdc"/>
-    <g stroke="#8a8a8a" stroke-width="1.3" fill="none">
-      <line x1="482" y1="20" x2="494" y2="20"/>
-      <rect x="512" y="14" width="12" height="12"/>
-      <line x1="546" y1="14" x2="556" y2="26"/>
-      <line x1="556" y1="14" x2="546" y2="26"/>
-    </g>
 
     <!-- barra de direcciones -->
-    <rect x="0" y="41" width="560" height="44" fill="#fafafa"/>
-    <rect x="0" y="85" width="560" height="1" fill="#e1e1e1"/>
+    <rect x="0" y="41" width="550" height="44" fill="#fafafa"/>
+    <rect x="0" y="85" width="550" height="1" fill="#e1e1e1"/>
     <g stroke="#8a8a8a" stroke-width="1.3" fill="none" stroke-linecap="round">
       <path d="M18 63 L13 63 M15 60 L11.5 63 L15 66"/>
       <path d="M34 63 L39 63 M37 60 L40.5 63 L37 66"/>
@@ -62,11 +58,11 @@
       <rect x="196" y="132" width="190" height="6" rx="3" fill="#d9d9d9"/>
 
       <!-- archivo de documento seleccionado (relevante: es el que se convierte); color
-           azul asociado al formato .docx, con la etiqueta del formato en vez del logo de Office -->
+           azul asociado al formato .docx, con una "W" genérica en vez del logo de Office -->
       <rect x="164" y="152" width="360" height="28" rx="4" fill="#e5f0fb" stroke="#cfe4fa"/>
-      <rect x="172" y="158" width="21" height="16" rx="2" fill="#185abd"/>
-      <text x="182.5" y="169" font-size="5.2" fill="#ffffff" font-weight="bold" text-anchor="middle">DOCX</text>
-      <rect x="203" y="163" width="167" height="6" rx="3" fill="#8fb8e6"/>
+      <rect x="172" y="158" width="16" height="16" rx="2" fill="#185abd"/>
+      <text x="180" y="170" font-size="10.5" fill="#ffffff" font-weight="bold" text-anchor="middle">W</text>
+      <rect x="198" y="163" width="170" height="6" rx="3" fill="#8fb8e6"/>
 
       <!-- archivos irrelevantes: solo bloques de color, sin detalle -->
       <rect x="172" y="190" width="16" height="16" rx="2" fill="#c8c8c8"/>
