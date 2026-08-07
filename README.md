@@ -1,11 +1,9 @@
 # NativeOfficeToPdf
 
-[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
-
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)\
 [![Último release](https://img.shields.io/github/v/release/n-a-monterocarvajal/NativeOfficeToPDF?label=release&color=success)](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/releases/latest)
 [![CI](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/ci.yml/badge.svg)](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/ci.yml)
-[![Compilación distribuible](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/build-package.yml/badge.svg)](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/build-package.yml)
-
+[![Compilación distribuible](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/build-package.yml/badge.svg)](https://github.com/n-a-monterocarvajal/NativeOfficeToPDF/actions/workflows/build-package.yml)\
 [![Windows 10 | 11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4)](#requisitos)
 [![.NET 10](https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white)](#requisitos)
 [![Requiere Microsoft Office](https://img.shields.io/badge/requiere-Microsoft%20Office-D83B01)](#requisitos)
