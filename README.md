@@ -97,9 +97,9 @@ adentro el nombre del original.
 | 5 | Error durante la automatización de Office |
 | 6 | `check-updates`: hay una versión más nueva de la aplicación |
 
-## Actualizaciones
+## Actualizaciones de la aplicación
 
-Después de convertir, la herramienta consulta si hay una versión más nueva publicada. Se notifica una sola vez por versión. Nunca
+Después de convertir, la herramienta consulta si hay una versión más nueva publicada en este repositorio. Se notifica una sola vez por versión. Nunca
 descarga ni instala nada por su cuenta: solo ofrece abrir la página del Release. `check-updates`
 fuerza la consulta.
 
@@ -114,7 +114,7 @@ dotnet test NativeOfficeToPdf.slnx -c Release
 El binario queda en `src\NativeOfficeToPdf\bin\Release\net10.0-windows\NativeOfficeToPdf.exe`.
 Para armar el instalador, ver [`installer/README.md`](installer/README.md).
 
-## Cómo está hecho, y qué no hace
+## Prevenciones y limitaciones
 
 La arquitectura y las decisiones de diseño están en
 [`docs/01-arquitectura.md`](docs/01-arquitectura.md).
