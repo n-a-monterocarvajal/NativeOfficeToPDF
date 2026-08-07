@@ -39,6 +39,16 @@
          proyecto fuera del runner). La compilación de verdad es la de Windows en CI. -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
 
+    <!-- El icono va embebido en el binario a propósito: el instalador apunta el verbo del menú
+         contextual y UninstallDisplayIcon a `{app}\NativeOfficeToPdf.exe`, así que un solo recurso
+         cubre el menú, "Aplicaciones instaladas" y el Explorador. Sin él, Windows cae al icono
+         genérico de aplicación. -->
+    <ApplicationIcon>NativeOfficeToPdf.ico</ApplicationIcon>
+
+    <!-- El manifiesto aporta la dependencia de Common Controls 6, sin la cual los diálogos se dibujan
+         con el estilo de Windows 2000 y la función TaskDialog ni siquiera existe en el proceso. -->
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>

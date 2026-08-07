@@ -31,7 +31,8 @@ Dos piezas independientes:
 El motor no sabe nada del menú contextual: es un CLI. El instalador no sabe nada de conversión: copia
 un `.exe` y escribe claves de registro. Eso permite versionar y probar cada pieza por separado, y
 reemplazar el mecanismo de menú contextual en el futuro —por ejemplo, por una extensión de shell en
-C++— sin tocar el motor.
+C++— sin tocar el motor. Ese reemplazo está analizado, con sus costes, en
+[04-menu-contextual-windows-11.md](04-menu-contextual-windows-11.md).
 
 El propio ejecutable sabe registrarse y desregistrarse (`install` / `uninstall`), que es lo que usa la
 versión portable y lo que cubren las pruebas. El instalador escribe las mismas claves por su cuenta;

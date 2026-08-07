@@ -86,12 +86,15 @@ internal static class Program
             // Desde la consola no se pregunta nada (rompería cualquier script): se exige --overwrite.
             // Desde Explorer, donde el usuario está mirando, se pregunta.
             bool proceed = output.Confirm(
-                $"«{Path.GetFileName(destination)}» ya existe.{Environment.NewLine}¿Reemplazarlo?",
+                $"«{Path.GetFileName(destination)}» ya existe.{Environment.NewLine}¿Desea reemplazarlo?",
                 consoleAnswer: false);
 
             if (!proceed)
             {
-                output.Error($"El destino ya existe: {destination}. Use --overwrite para reemplazarlo.");
+                // Solo por consola: desde Explorer el usuario acaba de responder que no, y un cuadro
+                // de error después de su propia decisión sobra —y encima hablaría de una opción del
+                // CLI que ahí no puede escribir—.
+                output.ConsoleError($"El destino ya existe: {destination}. Use --overwrite para reemplazarlo.");
                 return ExitCodes.Failure;
             }
         }
