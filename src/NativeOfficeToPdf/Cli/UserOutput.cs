@@ -55,9 +55,8 @@ internal sealed class UserOutput
             return;
         }
 
-        NativeMethods.MessageBoxW(
-            IntPtr.Zero, message, Caption,
-            NativeMethods.MbOk | NativeMethods.MbIconInformation | NativeMethods.MbSetForeground);
+        ShowDialog(message, NativeMethods.TdInformationIcon, NativeMethods.MbIconInformation,
+                   NativeMethods.TdcbfOk, NativeMethods.MbOk);
     }
 
     public void Error(string message)
@@ -68,9 +67,22 @@ internal sealed class UserOutput
             return;
         }
 
-        NativeMethods.MessageBoxW(
-            IntPtr.Zero, message, Caption,
-            NativeMethods.MbOk | NativeMethods.MbIconError | NativeMethods.MbSetForeground);
+        ShowDialog(message, NativeMethods.TdErrorIcon, NativeMethods.MbIconError,
+                   NativeMethods.TdcbfOk, NativeMethods.MbOk);
+    }
+
+    /// <summary>
+    /// Error dirigido a quien invoca desde la línea de comandos: menciona opciones del CLI, así que
+    /// nunca debe acabar en un cuadro de diálogo. Quien llega por el menú contextual no sabe qué es
+    /// <c>--overwrite</c> y, en los casos donde se usa, ya ha respondido él mismo a la pregunta: el
+    /// código de salida es el que informa.
+    /// </summary>
+    public void ConsoleError(string message)
+    {
+        if (HasConsole)
+        {
+            Console.Error.WriteLine(message);
+        }
     }
 
     /// <summary>
@@ -85,10 +97,55 @@ internal sealed class UserOutput
             return consoleAnswer;
         }
 
-        int result = NativeMethods.MessageBoxW(
-            IntPtr.Zero, question, Caption,
-            NativeMethods.MbYesNo | NativeMethods.MbIconQuestion | NativeMethods.MbSetForeground);
+        // Sin icono: el diálogo moderno no tiene equivalente del signo de interrogación —Windows lo
+        // retiró— y una pregunta con icono de advertencia dramatiza de más.
+        int result = ShowDialog(
+            question,
+            IntPtr.Zero,
+            NativeMethods.MbIconQuestion,
+            NativeMethods.TdcbfYes | NativeMethods.TdcbfNo,
+            NativeMethods.MbYesNo);
 
         return result == NativeMethods.IdYes;
+    }
+
+    /// <summary>
+    /// Dibuja el diálogo con <c>TaskDialog</c> —el aspecto actual de Windows— y cae a
+    /// <c>MessageBoxW</c> si no está disponible: comctl32 v6 llega por el manifiesto, y si algún día
+    /// falta, la herramienta debe seguir preguntando en vez de romperse.
+    /// <para>
+    /// La primera línea del mensaje se usa como instrucción principal (el texto grande) y el resto
+    /// como cuerpo. Así los mensajes se escriben en el sitio de la llamada como un texto normal y no
+    /// hay que partir cada uno en dos parámetros.
+    /// </para>
+    /// </summary>
+    private static int ShowDialog(string message, IntPtr taskDialogIcon, uint messageBoxIcon,
+                                  int taskDialogButtons, uint messageBoxButtons)
+    {
+        int corte = message.IndexOf('\n');
+        string encabezado = corte < 0 ? message : message[..corte].TrimEnd('\r');
+        string? cuerpo = corte < 0 ? null : message[(corte + 1)..];
+
+        try
+        {
+            int hresult = NativeMethods.TaskDialog(
+                IntPtr.Zero, IntPtr.Zero, Caption, encabezado, cuerpo,
+                taskDialogButtons, taskDialogIcon, out int boton);
+
+            if (hresult == 0)
+            {
+                return boton;
+            }
+        }
+        catch (DllNotFoundException)
+        {
+        }
+        catch (EntryPointNotFoundException)
+        {
+        }
+
+        return NativeMethods.MessageBoxW(
+            IntPtr.Zero, message, Caption,
+            messageBoxButtons | messageBoxIcon | NativeMethods.MbSetForeground);
     }
 }
