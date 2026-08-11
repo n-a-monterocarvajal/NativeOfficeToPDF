@@ -61,6 +61,11 @@ internal sealed class PowerPointConverter : IDocumentConverter
                     ("HandoutOrder", PpPrintHandoutVerticalFirst),
                     ("OutputType", PpPrintOutputSlides),
                     ("PrintHiddenSlides", MsoFalse),
+                    // PrintRange figura como "requerido" en la referencia VBA aunque puede ir a
+                    // Nothing: con enlace tardío (sin typelib de por medio) omitirlo hace que Office
+                    // no pueda resolver su valor por defecto y devuelva DISP_E_TYPEMISMATCH
+                    // (0x80020005) en vez de exportar. Pasar null explícito evita el fallo.
+                    ("PrintRange", null),
                     ("RangeType", PpPrintAll),
                     ("IncludeDocProperties", true),
                     ("KeepIRMSettings", true),
