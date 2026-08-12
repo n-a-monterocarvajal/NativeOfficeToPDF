@@ -18,7 +18,7 @@
 
     <!-- Fuente de verdad de la versión del producto. build-package.yml la lee de acá cuando no se le
          pasa una explícitamente, y el instalador la recibe por /DAppVersion. -->
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
