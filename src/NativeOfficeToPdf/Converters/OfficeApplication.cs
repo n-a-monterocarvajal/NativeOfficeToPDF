@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using NativeOfficeToPdf.Interop;
 
@@ -22,6 +23,8 @@ internal sealed class OfficeApplication : IDisposable
     // msoAutomationSecurityForceDisable
     private const int MsoAutomationSecurityForceDisable = 3;
 
+    private const int CoEServerExecFailure = unchecked((int)0x80080005);
+
     private readonly object?[] quitArguments;
     private readonly object? previousAlerts;
     private readonly object? previousSecurity;
@@ -45,9 +48,11 @@ internal sealed class OfficeApplication : IDisposable
     public bool StartedByUs { get; }
 
     /// <param name="progId">Por ejemplo <c>Word.Application</c>.</param>
+    /// <param name="processName">Nombre del proceso sin extensión, por ejemplo <c>WINWORD</c>.</param>
     /// <param name="alertsNone">Valor de <c>DisplayAlerts</c> que silencia la aplicación; cada una usa el suyo.</param>
     /// <param name="quitArguments">Argumentos posicionales de <c>Quit</c>, si la aplicación los acepta.</param>
-    public static OfficeApplication GetOrCreate(string progId, int alertsNone, params object?[] quitArguments)
+    public static OfficeApplication GetOrCreate(
+        string progId, string processName, int alertsNone, params object?[] quitArguments)
     {
         object? active = TryGetActive(progId);
         if (active is not null)
@@ -62,15 +67,81 @@ internal sealed class OfficeApplication : IDisposable
                 $"No se encontró el componente COM '{progId}'. ¿Está instalada esa aplicación de Office?");
         }
 
-        try
+        object created = Create(type, progId, processName);
+        return new OfficeApplication(new ComObject(created), startedByUs: true, alertsNone, quitArguments);
+    }
+
+    /// <summary>
+    /// Arranca la aplicación con un reintento. Si Office se cuelga al iniciarse —típicamente por un
+    /// aviso que nadie ve cuando lo lanza la automatización—, COM espera 120 segundos a que registre
+    /// su fábrica de clases y se rinde con <c>CO_E_SERVER_EXEC_FAILURE</c> (evento DCOM 10010). En ese
+    /// caso se cierra el proceso colgado, que si no bloquearía las conversiones siguientes, y se
+    /// reintenta una vez, como recomienda Microsoft para este error.
+    /// </summary>
+    private static object Create(Type type, string progId, string processName)
+    {
+        for (int attempt = 1; ; attempt++)
         {
-            object created = Activator.CreateInstance(type)
-                ?? throw new OfficeAutomationException($"No se pudo iniciar '{progId}'.");
-            return new OfficeApplication(new ComObject(created), startedByUs: true, alertsNone, quitArguments);
+            HashSet<int> before = ProcessIds(processName);
+            try
+            {
+                return Activator.CreateInstance(type)
+                    ?? throw new OfficeAutomationException($"No se pudo iniciar '{progId}'.");
+            }
+            catch (COMException ex) when (ex.HResult == CoEServerExecFailure)
+            {
+                // ponytail: "nuevo desde antes del arranque" = "lanzado por nosotros". Si el usuario abre
+                // esa misma aplicación a mano durante la espera de 120 s, también se cerraría.
+                KillNewProcesses(processName, before);
+
+                if (attempt == 2)
+                {
+                    string app = progId.Split('.')[0];
+                    throw new OfficeAutomationException(
+                        $"{app} no respondió al iniciarse automáticamente para proceder con la conversión. " +
+                        "Abra el documento manualmente para revisar si hay notificaciones pendientes.", ex);
+                }
+            }
+            catch (COMException ex)
+            {
+                throw new OfficeAutomationException($"No se pudo iniciar '{progId}': {ex.Message}", ex);
+            }
         }
-        catch (COMException ex)
+    }
+
+    private static HashSet<int> ProcessIds(string processName)
+    {
+        Process[] processes = Process.GetProcessesByName(processName);
+        HashSet<int> ids = processes.Select(p => p.Id).ToHashSet();
+        foreach (Process process in processes)
         {
-            throw new OfficeAutomationException($"No se pudo iniciar '{progId}': {ex.Message}", ex);
+            process.Dispose();
+        }
+
+        return ids;
+    }
+
+    private static void KillNewProcesses(string processName, HashSet<int> before)
+    {
+        foreach (Process process in Process.GetProcessesByName(processName))
+        {
+            using (process)
+            {
+                if (before.Contains(process.Id))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    process.Kill();
+                    process.WaitForExit(10_000);
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+                {
+                    // Ya terminó solo, o no hay permiso: el reintento dirá si sigue bloqueando.
+                }
+            }
         }
     }
 
