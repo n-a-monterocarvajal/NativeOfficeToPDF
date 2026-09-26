@@ -58,19 +58,4 @@ internal static class ContextMenuRegistrar
             Registry.CurrentUser.DeleteSubKeyTree(KeyPathFor(extension), throwOnMissingSubKey: false);
         }
     }
-
-    /// <summary>Verdadero si el verbo está registrado para todas las extensiones soportadas.</summary>
-    public static bool IsInstalled()
-    {
-        foreach (string extension in SupportedFormats.Extensions)
-        {
-            using RegistryKey? verb = Registry.CurrentUser.OpenSubKey(KeyPathFor(extension));
-            if (verb is null)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }

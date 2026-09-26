@@ -29,17 +29,6 @@ internal static class SupportedFormats
     /// <summary>Extensiones soportadas, con punto y en minúsculas.</summary>
     public static IReadOnlyCollection<string> Extensions => ByExtension.Keys;
 
-    public static bool IsSupported(string path) => TryGetFamily(path, out _);
-
-    public static bool TryGetFamily(string path, out OfficeFamily family)
-    {
-        string extension = Path.GetExtension(path);
-        if (string.IsNullOrEmpty(extension))
-        {
-            family = default;
-            return false;
-        }
-
-        return ByExtension.TryGetValue(extension, out family);
-    }
+    public static bool TryGetFamily(string path, out OfficeFamily family) =>
+        ByExtension.TryGetValue(Path.GetExtension(path), out family);
 }

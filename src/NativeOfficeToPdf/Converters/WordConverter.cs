@@ -8,7 +8,7 @@ namespace NativeOfficeToPdf.Converters;
 /// cinta. No se usa <c>SaveAs2</c>: es más genérico y da menos control sobre marcadores, propiedades
 /// del documento e IRM.
 /// </summary>
-internal sealed class WordConverter : IDocumentConverter
+internal static class WordConverter
 {
     private const string ProgId = "Word.Application";
 
@@ -22,27 +22,17 @@ internal sealed class WordConverter : IDocumentConverter
     private const int WdExportDocumentContent = 0;
     private const int WdExportCreateHeadingBookmarks = 1;
 
-    // msoAutomationSecurityForceDisable: abre el documento con las macros desactivadas, para que un
-    // AutoOpen no se ejecute ni deje un diálogo modal esperando a nadie.
-    private const int MsoAutomationSecurityForceDisable = 3;
-
     // Contraseña deliberadamente inverosímil. Si el documento está protegido, Word falla con una
     // excepción en vez de abrir un diálogo modal que dejaría el proceso colgado sin interfaz.
     private const string ImposiblePassword = " NativeOfficeToPdf-sin-contrasena ";
 
-    public void Convert(string sourcePath, string destinationPath)
+    public static void Convert(string sourcePath, string destinationPath)
     {
-        using OfficeApplication word = OfficeApplication.GetOrCreate(ProgId, WdDoNotSaveChanges);
+        using OfficeApplication word = OfficeApplication.GetOrCreate(ProgId, WdAlertsNone, WdDoNotSaveChanges);
         ComObject application = word.Application;
-
-        object? previousAlerts = application.TryGetProperty("DisplayAlerts");
-        object? previousSecurity = application.TryGetProperty("AutomationSecurity");
 
         try
         {
-            application.TrySetProperty("DisplayAlerts", WdAlertsNone);
-            application.TrySetProperty("AutomationSecurity", MsoAutomationSecurityForceDisable);
-
             // Solo se oculta la ventana si la instancia es nuestra: si es la del usuario, esconderle
             // Word mientras trabaja sería peor que el problema que se intenta evitar.
             if (word.StartedByUs)
@@ -93,18 +83,6 @@ internal sealed class WordConverter : IDocumentConverter
         {
             throw new OfficeAutomationException(
                 $"Word no pudo convertir «{Path.GetFileName(sourcePath)}»: {ex.Message}", ex);
-        }
-        finally
-        {
-            if (previousSecurity is not null)
-            {
-                application.TrySetProperty("AutomationSecurity", previousSecurity);
-            }
-
-            if (previousAlerts is not null)
-            {
-                application.TrySetProperty("DisplayAlerts", previousAlerts);
-            }
         }
     }
 }

@@ -33,33 +33,12 @@ internal sealed class ComObject : IDisposable
     /// Llama a un método pasando los argumentos por nombre, tal como se documentan en la referencia
     /// VBA de Office. El orden del arreglo no importa mientras nombres y valores se correspondan.
     /// </summary>
-    public void InvokeNamed(string name, params (string Name, object? Value)[] arguments)
-    {
-        object?[] values = new object?[arguments.Length];
-        string[] names = new string[arguments.Length];
-        for (int i = 0; i < arguments.Length; i++)
-        {
-            values[i] = arguments[i].Value;
-            names[i] = arguments[i].Name;
-        }
-
-        InvokeCore(BindingFlags.InvokeMethod, name, values, names);
-    }
+    public void InvokeNamed(string name, params (string Name, object? Value)[] arguments) =>
+        InvokeNamedCore(name, arguments);
 
     /// <summary>Llama a un método que devuelve otro objeto COM.</summary>
-    public ComObject InvokeNamedForObject(string name, params (string Name, object? Value)[] arguments)
-    {
-        object?[] values = new object?[arguments.Length];
-        string[] names = new string[arguments.Length];
-        for (int i = 0; i < arguments.Length; i++)
-        {
-            values[i] = arguments[i].Value;
-            names[i] = arguments[i].Name;
-        }
-
-        object? result = InvokeCore(BindingFlags.InvokeMethod, name, values, names);
-        return Wrap(name, result);
-    }
+    public ComObject InvokeNamedForObject(string name, params (string Name, object? Value)[] arguments) =>
+        Wrap(name, InvokeNamedCore(name, arguments));
 
     /// <summary>Lee una propiedad escalar.</summary>
     public object? GetProperty(string name) =>
@@ -69,10 +48,6 @@ internal sealed class ComObject : IDisposable
     public ComObject GetObject(string name) =>
         Wrap(name, GetProperty(name));
 
-    /// <summary>Escribe una propiedad.</summary>
-    public void SetProperty(string name, object? value) =>
-        InvokeCore(BindingFlags.SetProperty, name, [value], namedArguments: null);
-
     /// <summary>
     /// Escribe una propiedad ignorando el fallo. Se usa solo para ajustes cosméticos sobre una
     /// instancia de Office que puede no ser nuestra y que puede rechazar el cambio según su estado.
@@ -81,7 +56,7 @@ internal sealed class ComObject : IDisposable
     {
         try
         {
-            SetProperty(name, value);
+            InvokeCore(BindingFlags.SetProperty, name, [value], namedArguments: null);
         }
         catch (COMException)
         {
@@ -92,8 +67,8 @@ internal sealed class ComObject : IDisposable
         }
     }
 
-    /// <summary>Lee una propiedad, devolviendo <paramref name="fallback"/> si Office la rechaza.</summary>
-    public object? TryGetProperty(string name, object? fallback = null)
+    /// <summary>Lee una propiedad, devolviendo nulo si Office la rechaza.</summary>
+    public object? TryGetProperty(string name)
     {
         try
         {
@@ -101,13 +76,20 @@ internal sealed class ComObject : IDisposable
         }
         catch (COMException)
         {
-            return fallback;
+            return null;
         }
         catch (TargetInvocationException)
         {
-            return fallback;
+            return null;
         }
     }
+
+    private object? InvokeNamedCore(string name, (string Name, object? Value)[] arguments) =>
+        InvokeCore(
+            BindingFlags.InvokeMethod,
+            name,
+            arguments.Select(a => a.Value).ToArray(),
+            arguments.Select(a => a.Name).ToArray());
 
     private object? InvokeCore(BindingFlags flags, string name, object?[] arguments, string[]? namedArguments)
     {

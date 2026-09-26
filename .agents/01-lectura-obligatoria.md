@@ -21,7 +21,7 @@ Según lo que vaya a tocar:
 ## Trampas conocidas
 
 - **`Marshal.GetActiveObject` no existe** en .NET moderno. Está reimplementado en
-  `Interop/ActiveObject.cs`; no lo "arregle" volviendo a la API de .NET Framework.
+  `OfficeApplication.TryGetActive`; no lo "arregle" volviendo a la API de .NET Framework.
 - **Las llamadas a Office van por nombre de parámetro**, no por posición. `ExportAsFixedFormat` tiene
   catorce parámetros; reordenarlos es el error más fácil de cometer y el más difícil de ver.
 - **`Visible = false` no funciona en PowerPoint.** La vía soportada es abrir con

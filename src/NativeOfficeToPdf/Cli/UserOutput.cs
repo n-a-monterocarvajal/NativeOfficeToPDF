@@ -55,8 +55,7 @@ internal sealed class UserOutput
             return;
         }
 
-        ShowDialog(message, NativeMethods.TdInformationIcon, NativeMethods.MbIconInformation,
-                   NativeMethods.TdcbfOk, NativeMethods.MbOk);
+        ShowDialog(message, NativeMethods.TdInformationIcon, NativeMethods.TdcbfOk);
     }
 
     public void Error(string message)
@@ -67,8 +66,7 @@ internal sealed class UserOutput
             return;
         }
 
-        ShowDialog(message, NativeMethods.TdErrorIcon, NativeMethods.MbIconError,
-                   NativeMethods.TdcbfOk, NativeMethods.MbOk);
+        ShowDialog(message, NativeMethods.TdErrorIcon, NativeMethods.TdcbfOk);
     }
 
     /// <summary>
@@ -99,53 +97,29 @@ internal sealed class UserOutput
 
         // Sin icono: el diálogo moderno no tiene equivalente del signo de interrogación —Windows lo
         // retiró— y una pregunta con icono de advertencia dramatiza de más.
-        int result = ShowDialog(
-            question,
-            IntPtr.Zero,
-            NativeMethods.MbIconQuestion,
-            NativeMethods.TdcbfYes | NativeMethods.TdcbfNo,
-            NativeMethods.MbYesNo);
+        int result = ShowDialog(question, IntPtr.Zero, NativeMethods.TdcbfYes | NativeMethods.TdcbfNo);
 
         return result == NativeMethods.IdYes;
     }
 
     /// <summary>
-    /// Dibuja el diálogo con <c>TaskDialog</c> —el aspecto actual de Windows— y cae a
-    /// <c>MessageBoxW</c> si no está disponible: comctl32 v6 llega por el manifiesto, y si algún día
-    /// falta, la herramienta debe seguir preguntando en vez de romperse.
+    /// Dibuja el diálogo con <c>TaskDialog</c>, el aspecto actual de Windows. comctl32 v6 llega por el
+    /// manifiesto. Devuelve el botón pulsado, o 0 si el diálogo no se pudo mostrar.
     /// <para>
     /// La primera línea del mensaje se usa como instrucción principal (el texto grande) y el resto
     /// como cuerpo. Así los mensajes se escriben en el sitio de la llamada como un texto normal y no
     /// hay que partir cada uno en dos parámetros.
     /// </para>
     /// </summary>
-    private static int ShowDialog(string message, IntPtr taskDialogIcon, uint messageBoxIcon,
-                                  int taskDialogButtons, uint messageBoxButtons)
+    private static int ShowDialog(string message, IntPtr icon, int buttons)
     {
         int corte = message.IndexOf('\n');
         string encabezado = corte < 0 ? message : message[..corte].TrimEnd('\r');
         string? cuerpo = corte < 0 ? null : message[(corte + 1)..];
 
-        try
-        {
-            int hresult = NativeMethods.TaskDialog(
-                IntPtr.Zero, IntPtr.Zero, Caption, encabezado, cuerpo,
-                taskDialogButtons, taskDialogIcon, out int boton);
+        int hresult = NativeMethods.TaskDialog(
+            IntPtr.Zero, IntPtr.Zero, Caption, encabezado, cuerpo, buttons, icon, out int boton);
 
-            if (hresult == 0)
-            {
-                return boton;
-            }
-        }
-        catch (DllNotFoundException)
-        {
-        }
-        catch (EntryPointNotFoundException)
-        {
-        }
-
-        return NativeMethods.MessageBoxW(
-            IntPtr.Zero, message, Caption,
-            messageBoxButtons | messageBoxIcon | NativeMethods.MbSetForeground);
+        return hresult == 0 ? boton : 0;
     }
 }
