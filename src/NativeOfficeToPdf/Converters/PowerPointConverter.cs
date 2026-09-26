@@ -10,7 +10,7 @@ namespace NativeOfficeToPdf.Converters;
 /// asignación. La vía soportada es abrir la presentación con <c>WithWindow:=msoFalse</c>.
 /// </para>
 /// </summary>
-internal sealed class PowerPointConverter : IDocumentConverter
+internal static class PowerPointConverter
 {
     private const string ProgId = "PowerPoint.Application";
 
@@ -27,21 +27,13 @@ internal sealed class PowerPointConverter : IDocumentConverter
     private const int PpPrintHandoutVerticalFirst = 1;
     private const int PpPrintAll = 1;
 
-    private const int MsoAutomationSecurityForceDisable = 3;
-
-    public void Convert(string sourcePath, string destinationPath)
+    public static void Convert(string sourcePath, string destinationPath)
     {
-        using OfficeApplication powerPoint = OfficeApplication.GetOrCreate(ProgId);
+        using OfficeApplication powerPoint = OfficeApplication.GetOrCreate(ProgId, PpAlertsNone);
         ComObject application = powerPoint.Application;
-
-        object? previousAlerts = application.TryGetProperty("DisplayAlerts");
-        object? previousSecurity = application.TryGetProperty("AutomationSecurity");
 
         try
         {
-            application.TrySetProperty("DisplayAlerts", PpAlertsNone);
-            application.TrySetProperty("AutomationSecurity", MsoAutomationSecurityForceDisable);
-
             using ComObject presentations = application.GetObject("Presentations");
             using ComObject presentation = presentations.InvokeNamedForObject(
                 "Open",
@@ -83,18 +75,6 @@ internal sealed class PowerPointConverter : IDocumentConverter
         {
             throw new OfficeAutomationException(
                 $"PowerPoint no pudo convertir «{Path.GetFileName(sourcePath)}»: {ex.Message}", ex);
-        }
-        finally
-        {
-            if (previousSecurity is not null)
-            {
-                application.TrySetProperty("AutomationSecurity", previousSecurity);
-            }
-
-            if (previousAlerts is not null)
-            {
-                application.TrySetProperty("DisplayAlerts", previousAlerts);
-            }
         }
     }
 }
