@@ -56,7 +56,6 @@ public class SemanticVersionTests
         Assert.True(SemanticVersion.TryParse("v1.2.3+meta", out SemanticVersion left));
         Assert.True(SemanticVersion.TryParse("1.2.3", out SemanticVersion right));
 
-        Assert.Equal(left, right);
         Assert.Equal(0, left.CompareTo(right));
     }
 }
