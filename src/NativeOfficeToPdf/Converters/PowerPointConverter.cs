@@ -29,7 +29,7 @@ internal static class PowerPointConverter
 
     public static void Convert(string sourcePath, string destinationPath)
     {
-        using OfficeApplication powerPoint = OfficeApplication.GetOrCreate(ProgId, PpAlertsNone);
+        using OfficeApplication powerPoint = OfficeApplication.GetOrCreate(ProgId, "POWERPNT", PpAlertsNone);
         ComObject application = powerPoint.Application;
 
         try
