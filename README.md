@@ -90,6 +90,9 @@ adentro el nombre del original.
 > ```
 >
 > La variable de entorno `NATIVEOFFICETOPDF_NO_DIALOGS=1` desactiva todos los cuadros de diálogo.
+>
+> Cada fallo de conversión queda anotado en `%LOCALAPPDATA%\NativeOfficeToPdf\errores.log` (hora,
+> versión, archivo, código de error y mensaje), para poder diagnosticarlo después.
 
 ## Códigos de salida
 
