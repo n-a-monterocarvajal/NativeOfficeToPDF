@@ -28,7 +28,7 @@ internal static class WordConverter
 
     public static void Convert(string sourcePath, string destinationPath)
     {
-        using OfficeApplication word = OfficeApplication.GetOrCreate(ProgId, WdAlertsNone, WdDoNotSaveChanges);
+        using OfficeApplication word = OfficeApplication.GetOrCreate(ProgId, "WINWORD", WdAlertsNone, WdDoNotSaveChanges);
         ComObject application = word.Application;
 
         try
