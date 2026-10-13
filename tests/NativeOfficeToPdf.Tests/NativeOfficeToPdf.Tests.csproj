@@ -5,10 +5,9 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
 
-    <!-- xunit v3 3.2 es nativo de Microsoft.Testing.Platform: no lleva Microsoft.NET.Test.Sdk ni
-         xunit.runner.visualstudio (esos son la vía VSTest). Esta propiedad es la que hace que
-         `dotnet test` hable con MTP. -->
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- xunit v3 es nativo de Microsoft.Testing.Platform: no lleva Microsoft.NET.Test.Sdk ni
+         xunit.runner.visualstudio (esos son la vía VSTest). `dotnet test` habla con MTP porque
+         global.json lo elige como runner. -->
 
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -23,7 +22,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
   </ItemGroup>
 
   <ItemGroup>

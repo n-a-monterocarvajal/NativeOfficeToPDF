@@ -114,7 +114,7 @@ fuerza la consulta.
 ```powershell
 dotnet restore NativeOfficeToPdf.slnx
 dotnet build NativeOfficeToPdf.slnx -c Release
-dotnet test NativeOfficeToPdf.slnx -c Release
+dotnet test --solution NativeOfficeToPdf.slnx -c Release
 ```
 
 El binario queda en `src\NativeOfficeToPdf\bin\Release\net10.0-windows\NativeOfficeToPdf.exe`.

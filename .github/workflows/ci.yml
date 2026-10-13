@@ -67,7 +67,7 @@ jobs:
         run: dotnet build NativeOfficeToPdf.slnx -c Release --no-restore
 
       - name: Pruebas
-        run: dotnet test NativeOfficeToPdf.slnx -c Release --no-build
+        run: dotnet test --solution NativeOfficeToPdf.slnx -c Release --no-build
 
       # Lo único del binario real que un runner sin Office puede comprobar: que arranca, que responde
       # a la línea de comandos y que devuelve los códigos de salida documentados en el README.
