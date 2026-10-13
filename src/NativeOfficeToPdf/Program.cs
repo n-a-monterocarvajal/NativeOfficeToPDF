@@ -37,18 +37,52 @@ internal static class Program
         }
         catch (OfficeAutomationException ex)
         {
+            LogError(command, ex);
             output.Error(ex.Message);
             return ExitCodes.OfficeAutomationError;
         }
         catch (COMException ex)
         {
+            LogError(command, ex);
             output.Error($"Error de automatización de Office: {ex.Message}");
             return ExitCodes.OfficeAutomationError;
         }
         catch (Exception ex)
         {
+            LogError(command, ex);
             output.Error($"Error inesperado: {ex.Message}");
             return ExitCodes.Failure;
+        }
+    }
+
+    /// <summary>
+    /// Deja constancia del fallo en <c>%LOCALAPPDATA%\NativeOfficeToPdf\errores.log</c>: hora, versión,
+    /// archivo, HRESULT y mensaje. El Visor de eventos registra que Office no arrancó, pero no qué
+    /// programa lo pidió, así que sin esto no se puede atribuir un fallo a esta herramienta. Como el
+    /// chequeo de actualizaciones, nunca debe poder alterar el resultado.
+    /// </summary>
+    private static void LogError(ParsedCommand command, Exception ex)
+    {
+        try
+        {
+            string path = Path.Combine(AppInfo.StateDirectory, "errores.log");
+
+            // ponytail: al pasar de 1 MB se borra entero; rotar si alguna vez hace falta historia larga.
+            if (File.Exists(path) && new FileInfo(path).Length > 1_000_000)
+            {
+                File.Delete(path);
+            }
+
+            Directory.CreateDirectory(AppInfo.StateDirectory);
+            int hresult = (ex.InnerException ?? ex).HResult;
+            File.AppendAllText(
+                path,
+                $"{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz}\t{AppInfo.Version}\t{command.Source}\t" +
+                $"0x{hresult:X8}\t{ex.Message.ReplaceLineEndings(" ")}{Environment.NewLine}");
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // Sin registro, el fallo se sigue informando al usuario igual.
         }
     }
 
