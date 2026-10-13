@@ -2,14 +2,19 @@
 
 ## Estado del proyecto
 
-Repositorio público con v0.1.0 y v0.1.1 publicadas como Releases, así que el chequeo de
-actualizaciones funciona. v0.1.1 corrigió errores de conversión encontrados contra Office real. La
-conversión básica de `.docx` y `.pptx` (Office cerrado, sin procesos huérfanos) se verificó a mano
-el 2026-09-25; el resto del guion de humo manual no consta como ejecutado.
+Repositorio público con v0.1.0, v0.1.1 y v0.1.2 publicadas como Releases, así que el chequeo de
+actualizaciones funciona. El guion de humo manual completo se corrió para v0.1.2 (2026-09-25 a
+2026-10-13): instalación sin UAC, menú contextual, fidelidad, reemplazo, selección múltiple, Word
+del usuario abierto, documento protegido, serie sin huérfanos, línea de comandos y desinstalación.
+
+`CO_E_SERVER_EXEC_FAILURE` (0x80080005) al iniciar Office es intermitente y no se reproduce a
+voluntad. v0.1.2 cierra la instancia colgada que lanzó la herramienta y reintenta una vez, y anota
+cada fallo en `%LOCALAPPDATA%\NativeOfficeToPdf\errores.log`. Si se reporta otro fallo, ese archivo
+dice si vino de esta herramienta o de otro programa que automatiza Office en el mismo equipo.
 
 ## Lo que está pendiente y por qué
 
-- **Correr el guion de humo manual.** Es la única validación posible de la conversión. Hasta que se
+- **Correr el guion de humo manual en cada versión.** Es la única validación posible de la conversión. Hasta que se
   corra, no dé por buena ninguna afirmación sobre fidelidad ni sobre procesos huérfanos.
 - **Excel.** Fuera del alcance de la primera versión, a pedido. Agregarlo es el mismo patrón con
   `Workbook.ExportAsFixedFormat` y una entrada más en `SupportedFormats`, el `.iss` y el `README`.
