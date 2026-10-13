@@ -48,7 +48,7 @@ proyecto es lo bastante pequeño como para que ese esfuerzo sea trivial. Se usa 
 framework-dependent, con un zip autocontenido disponible para equipos sin runtime.
 
 Consecuencia a tener presente: `Marshal.GetActiveObject` no existe fuera de .NET Framework.
-`Interop/ActiveObject.cs` lo reimplementa con P/Invoke a `CLSIDFromProgID` y `GetActiveObject`.
+`OfficeApplication.TryGetActive` lo reimplementa con P/Invoke a `CLSIDFromProgID` y `GetActiveObject`.
 
 ### 3.2 Por qué enlace tardío y no los PIA
 
@@ -77,7 +77,7 @@ Lo que se pierde —comprobación en compilación— se compensa así:
 ### 3.3 Reglas de la automatización
 
 - **Reutilizar la instancia activa.** Cada conversor busca primero un Word o PowerPoint en marcha
-  (`ActiveObject.TryGet`). Si lo encuentra, lo usa y **no lo cierra**; si no, crea uno y ese sí se
+  (`OfficeApplication.TryGetActive`). Si lo encuentra, lo usa y **no lo cierra**; si no, crea uno y ese sí se
   cierra con `Quit()`. Es lo que evita cerrarle a alguien el Word que tenía abierto con un documento
   sin guardar.
 - **Liberar COM explícitamente.** `ComObject.Dispose` llama a `Marshal.ReleaseComObject`, y
@@ -108,7 +108,7 @@ que se convierte desde el Explorador, que es el uso principal.
 Eso, por sí solo, dejaría la herramienta muda en la línea de comandos. `Cli/UserOutput.cs` resuelve
 el conflicto: al arrancar intenta `AttachConsole(ATTACH_PARENT_PROCESS)`. Si el proceso padre tiene
 consola —lo invocó PowerShell o cmd—, escribe ahí como cualquier CLI. Si no la hay, los errores salen
-por `MessageBox` y el éxito no muestra nada. La variable `NATIVEOFFICETOPDF_NO_DIALOGS=1` suprime los
+por un cuadro `TaskDialog` y el éxito no muestra nada. La variable `NATIVEOFFICETOPDF_NO_DIALOGS=1` suprime los
 diálogos para uso desatendido; el CI la usa para que un fallo no cuelgue el runner en un modal.
 
 El precio de `WinExe`: PowerShell no espera a que el proceso termine. Está documentado en el README

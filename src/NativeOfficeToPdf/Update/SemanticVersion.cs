@@ -7,7 +7,7 @@ namespace NativeOfficeToPdf.Update;
 /// con la versión compilada. Acepta la <c>v</c> inicial de las etiquetas de Git e ignora los metadatos
 /// de compilación (<c>+sha</c>), que por especificación no participan en la precedencia.
 /// </summary>
-internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable<SemanticVersion>
+internal sealed class SemanticVersion : IComparable<SemanticVersion>
 {
     private SemanticVersion(int major, int minor, int patch, string[] preRelease, string text)
     {
@@ -176,12 +176,6 @@ internal sealed class SemanticVersion : IComparable<SemanticVersion>, IEquatable
 
         return string.CompareOrdinal(left, right);
     }
-
-    public bool Equals(SemanticVersion? other) => CompareTo(other) == 0;
-
-    public override bool Equals(object? obj) => obj is SemanticVersion other && Equals(other);
-
-    public override int GetHashCode() => Text.GetHashCode(StringComparison.Ordinal);
 
     public override string ToString() => Text;
 }

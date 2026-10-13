@@ -27,7 +27,7 @@ public class SupportedFormatsTests
     [InlineData(@"C:\sin-extension")]
     public void RechazaLoQueNoSabeConvertir(string path)
     {
-        Assert.False(SupportedFormats.IsSupported(path));
+        Assert.False(SupportedFormats.TryGetFamily(path, out _));
     }
 
     [Fact]

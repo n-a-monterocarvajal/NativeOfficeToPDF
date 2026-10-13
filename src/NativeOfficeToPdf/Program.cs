@@ -105,8 +105,14 @@ internal static class Program
             Directory.CreateDirectory(destinationDirectory);
         }
 
-        IDocumentConverter converter = ConverterFactory.Create(family);
-        converter.Convert(source, destination);
+        if (family == OfficeFamily.Word)
+        {
+            WordConverter.Convert(source, destination);
+        }
+        else
+        {
+            PowerPointConverter.Convert(source, destination);
+        }
 
         if (!File.Exists(destination))
         {
