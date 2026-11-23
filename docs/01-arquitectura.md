@@ -80,6 +80,19 @@ Lo que se pierde —comprobación en compilación— se compensa así:
   (`OfficeApplication.TryGetActive`). Si lo encuentra, lo usa y **no lo cierra**; si no, crea uno y ese sí se
   cierra con `Quit()`. Es lo que evita cerrarle a alguien el Word que tenía abierto con un documento
   sin guardar.
+- **Una conversión por aplicación a la vez.** Con varios archivos seleccionados, el Explorador lanza
+  un proceso por archivo y todos llegan al mismo Word. Mientras uno exporta, Word rechaza las
+  llamadas de los demás (`RPC_E_CALL_REJECTED`, 0x80010001), y el primero en terminar cerraría con
+  `Quit()` la instancia que otro sigue usando. `OfficeApplication` toma un mutex con nombre por
+  aplicación (`Local\NativeOfficeToPdf-WINWORD`, `…-POWERPNT`) antes de buscar o crear la instancia
+  y lo suelta después de cerrarla: los procesos hacen fila. Se descartó juntar todos los archivos en
+  un solo proceso (`MultiSelectModel=Player`) porque cambia la línea de comandos que recibe el
+  programa y el registro del menú en dos sitios, por un beneficio que el mutex ya da.
+- **Reintentar cuando Office está ocupado.** Mientras dura la conversión se registra un filtro de
+  mensajes OLE (`Interop/MessageFilter.cs`, `CoRegisterMessageFilter`). Si Office responde
+  `SERVERCALL_RETRYLATER` —ocupado abriendo un archivo de OneDrive, o con un diálogo abierto en la
+  instancia del usuario—, COM reintenta cada 250 ms durante hasta dos minutos en vez de fallar al
+  instante.
 - **Liberar COM explícitamente.** `ComObject.Dispose` llama a `Marshal.ReleaseComObject`, y
   `OfficeApplication.Dispose` remata con `GC.Collect()` y `GC.WaitForPendingFinalizers()`. Sin esto,
   las conversiones repetidas dejan procesos `WINWORD.EXE` y `POWERPNT.EXE` huérfanos: es la causa

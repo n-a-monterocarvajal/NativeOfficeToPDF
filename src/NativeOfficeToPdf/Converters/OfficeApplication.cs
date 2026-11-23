@@ -17,6 +17,15 @@ namespace NativeOfficeToPdf.Converters;
 /// para que un AutoOpen no se ejecute ni deje un diálogo modal esperando a nadie. Al terminar se
 /// restauran los valores que tenía: si la instancia es del usuario, su configuración no cambia.
 /// </para>
+/// <para>
+/// Las conversiones de una misma aplicación se hacen <b>de a una</b>, aunque haya varios procesos de
+/// esta herramienta en marcha. Con varios archivos seleccionados, el Explorador lanza un proceso por
+/// archivo, y todos terminarían hablándole al mismo Word: mientras uno exporta, Word rechaza las
+/// llamadas del otro (<c>RPC_E_CALL_REJECTED</c>), y el primero que termina podría cerrar con
+/// <c>Quit</c> la instancia que el otro sigue usando. Un mutex con nombre por aplicación los pone en
+/// fila; además, un <see cref="MessageFilter"/> reintenta las llamadas que Office rechaza por estar
+/// ocupado por otra causa.
+/// </para>
 /// </summary>
 internal sealed class OfficeApplication : IDisposable
 {
@@ -25,13 +34,22 @@ internal sealed class OfficeApplication : IDisposable
 
     private const int CoEServerExecFailure = unchecked((int)0x80080005);
 
+    // Cuánto espera un proceso a que terminen las conversiones anteriores de la misma aplicación. Es
+    // generoso a propósito: con muchos archivos grandes seleccionados, la fila puede ser larga.
+    private static readonly TimeSpan QueueTimeout = TimeSpan.FromMinutes(30);
+
+    private readonly Mutex queue;
+    private readonly MessageFilter messageFilter;
     private readonly object?[] quitArguments;
     private readonly object? previousAlerts;
     private readonly object? previousSecurity;
     private bool disposed;
 
-    private OfficeApplication(ComObject application, bool startedByUs, int alertsNone, object?[] quitArguments)
+    private OfficeApplication(
+        Mutex queue, MessageFilter messageFilter, ComObject application, bool startedByUs, int alertsNone, object?[] quitArguments)
     {
+        this.queue = queue;
+        this.messageFilter = messageFilter;
         Application = application;
         StartedByUs = startedByUs;
         this.quitArguments = quitArguments;
@@ -54,21 +72,66 @@ internal sealed class OfficeApplication : IDisposable
     public static OfficeApplication GetOrCreate(
         string progId, string processName, int alertsNone, params object?[] quitArguments)
     {
-        object? active = TryGetActive(progId);
-        if (active is not null)
+        Mutex queue = EnterQueue(progId, processName);
+        MessageFilter messageFilter = MessageFilter.Register();
+        try
         {
-            return new OfficeApplication(new ComObject(active), startedByUs: false, alertsNone, quitArguments);
+            object? active = TryGetActive(progId);
+            if (active is not null)
+            {
+                return new OfficeApplication(
+                    queue, messageFilter, new ComObject(active), startedByUs: false, alertsNone, quitArguments);
+            }
+
+            Type? type = Type.GetTypeFromProgID(progId, throwOnError: false);
+            if (type is null)
+            {
+                throw new OfficeAutomationException(
+                    $"No se encontró el componente COM '{progId}'. ¿Está instalada esa aplicación de Office?");
+            }
+
+            object created = Create(type, progId, processName);
+            return new OfficeApplication(
+                queue, messageFilter, new ComObject(created), startedByUs: true, alertsNone, quitArguments);
+        }
+        catch
+        {
+            messageFilter.Dispose();
+            LeaveQueue(queue);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Espera el turno para usar la aplicación. El mutex vive en el espacio <c>Local\</c>: es por sesión
+    /// de Windows, igual que las instancias de Office que COM reparte.
+    /// </summary>
+    private static Mutex EnterQueue(string progId, string processName)
+    {
+        var queue = new Mutex(initiallyOwned: false, $@"Local\{AppInfo.Name}-{processName}");
+        try
+        {
+            if (!queue.WaitOne(QueueTimeout))
+            {
+                queue.Dispose();
+                string app = progId.Split('.')[0];
+                throw new OfficeAutomationException(
+                    $"Otra conversión con {app} lleva demasiado tiempo en curso. Espere a que termine e inténtelo de nuevo.");
+            }
+        }
+        catch (AbandonedMutexException)
+        {
+            // El proceso anterior terminó sin soltarlo (lo cerraron a la fuerza). El mutex queda
+            // adquirido igual, y es nuestro turno.
         }
 
-        Type? type = Type.GetTypeFromProgID(progId, throwOnError: false);
-        if (type is null)
-        {
-            throw new OfficeAutomationException(
-                $"No se encontró el componente COM '{progId}'. ¿Está instalada esa aplicación de Office?");
-        }
+        return queue;
+    }
 
-        object created = Create(type, progId, processName);
-        return new OfficeApplication(new ComObject(created), startedByUs: true, alertsNone, quitArguments);
+    private static void LeaveQueue(Mutex queue)
+    {
+        queue.ReleaseMutex();
+        queue.Dispose();
     }
 
     /// <summary>
@@ -204,6 +267,10 @@ internal sealed class OfficeApplication : IDisposable
             GC.Collect();
             GC.WaitForPendingFinalizers();
             GC.Collect();
+
+            // Recién ahora, con la instancia cerrada si era nuestra, le toca al siguiente proceso.
+            messageFilter.Dispose();
+            LeaveQueue(queue);
         }
     }
 }

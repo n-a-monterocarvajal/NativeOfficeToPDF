@@ -12,6 +12,11 @@ voluntad. v0.1.2 cierra la instancia colgada que lanzó la herramienta y reinten
 cada fallo en `%LOCALAPPDATA%\NativeOfficeToPdf\errores.log`. Si se reporta otro fallo, ese archivo
 dice si vino de esta herramienta o de otro programa que automatiza Office en el mismo equipo.
 
+Después de v0.1.2 se reportó `RPC_E_CALL_REJECTED` (0x80010001) al convertir dos `.docx` seleccionados
+a la vez en una carpeta de OneDrive: dos procesos de la herramienta hablándole al mismo Word. La
+corrección (mutex por aplicación y filtro de mensajes OLE en `OfficeApplication`) no tiene versión
+publicada todavía ni guion de humo corrido; el paso nuevo del guion es el de OneDrive.
+
 ## Lo que está pendiente y por qué
 
 - **Correr el guion de humo manual en cada versión.** Es la única validación posible de la conversión. Hasta que se
