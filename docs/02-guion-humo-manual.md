@@ -33,6 +33,9 @@ Marque cada punto. Si alguno falla, no se publica.
 - [ ] Convertir el mismo archivo otra vez → pregunta si reemplazar el PDF existente. Responder que no
       deja el PDF anterior intacto.
 - [ ] Seleccionar tres documentos a la vez y convertir: se generan los tres.
+- [ ] Lo mismo con dos o tres `.docx` grandes **en una carpeta de OneDrive**: se generan todos, sin
+      «La llamada fue rechazada por el destinatario» (`RPC_E_CALL_REJECTED`), y al terminar no queda
+      ningún `WINWORD.EXE` en el Administrador de tareas.
 
 ## Lo que no debe pasar
 

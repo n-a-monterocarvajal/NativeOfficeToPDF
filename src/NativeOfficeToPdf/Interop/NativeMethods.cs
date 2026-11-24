@@ -4,7 +4,7 @@ namespace NativeOfficeToPdf.Interop;
 
 /// <summary>
 /// P/Invoke mínimo. Se usa DllImport clásico en vez de LibraryImport para no tener que habilitar
-/// bloques unsafe en el proyecto: son cinco funciones y ninguna está en un camino caliente.
+/// bloques unsafe en el proyecto: son pocas funciones y ninguna está en un camino caliente.
 /// </summary>
 internal static class NativeMethods
 {
@@ -59,4 +59,10 @@ internal static class NativeMethods
         ref Guid clsid,
         IntPtr reserved,
         [MarshalAs(UnmanagedType.IUnknown)] out object instance);
+
+    /// <summary>Instala un filtro de mensajes OLE en el hilo STA actual; ver <see cref="MessageFilter"/>.</summary>
+    [DllImport("ole32.dll", ExactSpelling = true, PreserveSig = true)]
+    internal static extern int CoRegisterMessageFilter(
+        IOleMessageFilter? newFilter,
+        out IOleMessageFilter? oldFilter);
 }
