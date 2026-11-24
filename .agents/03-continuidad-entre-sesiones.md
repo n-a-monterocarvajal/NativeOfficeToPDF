@@ -2,7 +2,7 @@
 
 ## Estado del proyecto
 
-Repositorio público con v0.1.0, v0.1.1 y v0.1.2 publicadas como Releases, así que el chequeo de
+Repositorio público con v0.1.0, v0.1.1, v0.1.2 y v0.1.3 publicadas como Releases, así que el chequeo de
 actualizaciones funciona. El guion de humo manual completo se corrió para v0.1.2 (2026-09-25 a
 2026-10-13): instalación sin UAC, menú contextual, fidelidad, reemplazo, selección múltiple, Word
 del usuario abierto, documento protegido, serie sin huérfanos, línea de comandos y desinstalación.
@@ -13,9 +13,10 @@ cada fallo en `%LOCALAPPDATA%\NativeOfficeToPdf\errores.log`. Si se reporta otro
 dice si vino de esta herramienta o de otro programa que automatiza Office en el mismo equipo.
 
 Después de v0.1.2 se reportó `RPC_E_CALL_REJECTED` (0x80010001) al convertir dos `.docx` seleccionados
-a la vez en una carpeta de OneDrive: dos procesos de la herramienta hablándole al mismo Word. La
-corrección (mutex por aplicación y filtro de mensajes OLE en `OfficeApplication`) no tiene versión
-publicada todavía ni guion de humo corrido; el paso nuevo del guion es el de OneDrive.
+a la vez en una carpeta de OneDrive: dos procesos de la herramienta hablándole al mismo Word. v0.1.3
+lo corrige con un mutex por aplicación y un filtro de mensajes OLE en `OfficeApplication`. Se publicó
+a pedido del usuario **sin correr antes el guion de humo**: el paso de OneDrive y la serie sin
+huérfanos siguen sin verificarse sobre v0.1.3.
 
 ## Lo que está pendiente y por qué
 
